@@ -1,0 +1,13 @@
+// floason (C) 2026
+// Licensed under the MIT License.
+
+#pragma once
+
+#include <iostream>
+
+namespace nuke
+{
+    const int major = @nuke_VERSION_MAJOR@;
+    const int minor = @nuke_VERSION_MINOR@;
+    const int patch = @nuke_VERSION_PATCH@;
+};
