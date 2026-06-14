@@ -2,7 +2,12 @@ set(NUKE_CONFIGURED_HEADER "${PROJECT_BINARY_DIR}/configured/nuke_version.hpp")
 configure_file(nuke_version.hpp.in ${NUKE_CONFIGURED_HEADER})
 install(FILES ${NUKE_CONFIGURED_HEADER} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-add_library(nuke main.cpp)
+option(NUKE_BUILD_SHARED "Build Nuke as a shared library instead of static by default" ON)
+if(NUKE_BUILD_SHARED)
+    set(NUKE_SHARED SHARED)
+endif()
+
+add_library(nuke ${NUKE_SHARED} main.cpp)
 target_link_libraries(nuke PRIVATE nuke_interface SDL3::SDL3)
 target_include_directories(nuke 
     PUBLIC  "${PROJECT_BINARY_DIR}/configured"
