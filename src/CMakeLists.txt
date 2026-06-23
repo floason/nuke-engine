@@ -7,12 +7,14 @@ if(NUKE_BUILD_SHARED)
     set(NUKE_SHARED SHARED)
 endif()
 
-add_library(nuke ${NUKE_SHARED} main.cpp)
-target_link_libraries(nuke PRIVATE nuke_interface SDL3::SDL3)
+add_subdirectory(texture)
+
+add_library(nuke ${NUKE_SHARED} engine.cpp)
+target_link_libraries(nuke PRIVATE nuke_interface nuke_texture SDL3::SDL3 SDL3_image::SDL3_image)
 target_include_directories(nuke 
     PUBLIC  "${PROJECT_BINARY_DIR}/configured"
             "${PROJECT_SOURCE_DIR}/include"
-    PRIVATE "${PROJECT_SOURCE_DIR}/src"
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 nuke_compile_export_macros(nuke)
 
@@ -24,7 +26,10 @@ if (SDL3_TYPE STREQUAL "SHARED_LIBRARY")
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3>
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        COMMENT "Copying SDL3 shared library to build directory."
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3_image::SDL3_image>
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        COMMENT "Copying SDL3 shared libraries to build directory."
     )
 endif()
 

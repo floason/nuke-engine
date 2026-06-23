@@ -7,7 +7,7 @@
 
 namespace nuke
 {
-    const int major = @nuke_VERSION_MAJOR@;
-    const int minor = @nuke_VERSION_MINOR@;
-    const int patch = @nuke_VERSION_PATCH@;
+    const int engine_major = @nuke_VERSION_MAJOR@;
+    const int engine_minor = @nuke_VERSION_MINOR@;
+    const int engine_patch = @nuke_VERSION_PATCH@;
 };

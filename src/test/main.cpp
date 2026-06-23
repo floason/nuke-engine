@@ -1,13 +1,38 @@
 // floason (C) 2026
 // Licensed under the MIT License.
 
-#include <iostream>
+// This creates a very preliminary test game using Nuke. This code was written
+// before an SDK was derived for Nuke, thus it implements its own frontends of
+// the IEntity and its affiliated interfaces.
 
 #include "nuke.hpp"
+#include "game_interface.hpp"
+#include "testentity.hpp"
+
+static int engine_failed()
+{
+    std::cout << engine->GetLastError() << std::endl;
+    engine->Shutdown();
+    return EXIT_FAILURE;
+}
 
 int main()
 {
-    nuke::nuke_print_hello();
+    engine = nuke::IEngine::GetEngineAPI(
+        nuke::engine_major, 
+        nuke::engine_minor, 
+        nuke::engine_patch
+    );
+    if (engine == nullptr)
+        return EXIT_FAILURE;
 
-    return 0;
+    engine->SetGameInterface(game);
+    engine->PrintVersion();
+    if (!engine->Init())
+        return engine_failed();
+    if (!engine->Start())
+        return engine_failed();
+
+    engine->Shutdown();
+    return EXIT_SUCCESS;
 }

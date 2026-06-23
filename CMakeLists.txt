@@ -1,10 +1,26 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.24)
 include(GNUInstallDirs)
 
-project(nuke VERSION 0.0.0 LANGUAGES C CXX)
+project(nuke VERSION 0.1.0 LANGUAGES C CXX)
+
+# This engine uses SDL3 so as to power the Rust 2D engine as a whole.
+option(NUKE_USE_VENDORED_SDL3 "Compile SDL3 submodule instead of using SDL3 package" OFF)
+if(NUKE_USE_VENDORED_SDL3)
+    if(NOT SDL3_DIR)
+        set(SDL3_DIR external/SDL3/cmake)
+    endif()
+    if(NOT SDL3_image_DIR)
+        set(SDL3_image_DIR external/SDL3_image/cmake)
+    endif()
+    find_package(SDL3 REQUIRED)
+    find_package(SDL3_image REQUIRED)
+else()
+    add_subdirectory(submodules/SDL EXCLUDE_FROM_ALL)
+    add_subdirectory(submodules/SDL_mixer EXCLUDE_FROM_ALL)
+endif()
 
 add_library(nuke_interface INTERFACE)
-target_compile_features(nuke_interface INTERFACE cxx_std_11)
+target_compile_features(nuke_interface INTERFACE cxx_std_17)
 
 # Called on target libraries that export certain definitions. This defines
 # the NUKE_EXPORT macro for the supplied library while also making all symbols
@@ -41,17 +57,6 @@ set(NUKE_OUTPUT_DIR "${PROJECT_BINARY_DIR}/out/${NUKE_ARCH}/${NUKE_CONFIG}/$<PLA
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${NUKE_OUTPUT_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${NUKE_OUTPUT_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${NUKE_OUTPUT_DIR}/bin")
-
-# This engine uses SDL3 so as to power the Rust 2D engine as a whole.
-option(NUKE_USE_VENDORED_SDL3 "Compile SDL3 submodule instead of using SDL3 package" OFF)
-if(NUKE_USE_VENDORED_SDL3)
-    if(NOT SDL3_DIR)
-        set(SDL3_DIR external/SDL3/cmake)
-    endif()
-    find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
-else()
-    add_subdirectory(submodules/SDL EXCLUDE_FROM_ALL)
-endif()
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 add_subdirectory(src)

@@ -1,6 +1,8 @@
 // floason (C) 2026
 // Licensed under the MIT License.
 
+#pragma once
+
 #ifdef NUKE_SHARED_LIBRARY
 #   ifdef _MSC_VER
 #       ifdef NUKE_EXPORT
@@ -14,3 +16,7 @@
 #else
 #   define NUKE_API
 #endif
+
+#define NUKE_DEFAULT_TICKRATE       60.f
+#define NUKE_MAX_TICKS_PER_FRAME    10
+#define NUKE_NS_PER_S               1000000000ULL
