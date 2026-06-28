@@ -34,6 +34,9 @@ public:
 
     // Per-tick method which is invoked by the engine after starting.
     virtual bool PerTick(bool last_per_frame) override;
+    
+    // Called when the process exits.
+    virtual bool Exit(bool window_closed) override;
 
 public:
     nuke::CommonVars commonvars;

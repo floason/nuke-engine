@@ -8,13 +8,20 @@
 
 #pragma once
 
-// TODO: make TextureStream which lets you lock texture in place and write raw pixel data
-
 #include "nuke.hpp"
 #include "texture_factory.hpp"
 
 namespace nuke
 {
+
+enum class TextureType
+{
+    BASE,   // This texture is not usable!
+
+    RECT,
+    IMAGE,
+    STREAM
+};
 
 class TextureBase : public ITexture
 {
@@ -35,6 +42,13 @@ public:
     virtual void Draw(Vector2 origin, 
                       Vector2 size = { 0, 0 }, 
                       ITextureDescriptor* descriptor = nullptr) = 0;
+
+public:
+    // Get the texture type.
+    TextureType GetType();
+
+protected:
+    TextureType type_ = TextureType::BASE;
 };
 
 }   // namespace nuke

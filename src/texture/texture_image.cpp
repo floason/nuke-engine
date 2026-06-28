@@ -17,11 +17,9 @@ REGISTER_TEXTURE("texture_image", const char*, TextureImage);
 // Load a texture from an existing image.
 TextureImage::TextureImage(const char* path)
 {
-    SDL_Texture* texture = Get();
-    if (texture != nullptr)
-        SDL_DestroyTexture(texture);
+    type_ = TextureType::IMAGE;
 
-    texture = IMG_LoadTexture(engine.renderer, path);
+    SDL_Texture* texture = IMG_LoadTexture(engine.renderer, path);
     if (texture == NULL)
         return;
 

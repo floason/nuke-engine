@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include <iostream>
+#include <cstdint>
 
 #include "nuke.hpp"
 #include "game_interface.hpp"
@@ -17,6 +18,7 @@ TestEntityManager* entity_manager = &entity_manager_;
 
 static TestEntity* test4;
 static TestEntity* test5;
+static nuke::PixelBufferDescriptor descriptor(100, 100);
 
 // Get a reference to the game's common variables struct.
 nuke::CommonVars& TestGame::GetCommonVars()
@@ -82,6 +84,13 @@ bool TestGame::Init()
     test5->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
     test5->GetPhysicsDescriptor()->GetOrigin() = { 450, -250 };
 
+    TestEntity* test6 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    test6->GetTextureDescriptor()->SetTexture(
+        engine->CreateRawTexture("texture_stream", &descriptor));
+    test6->GetTextureDescriptor()->OwnTexture();
+    test6->GetTextureDescriptor()->GetRenderSize() = { 100, 100 };
+    test6->GetPhysicsDescriptor()->GetOrigin() = { 50, -330 };
+
     return true;
 }
 
@@ -95,8 +104,8 @@ bool TestGame::PerFrame()
 bool TestGame::PerTick(bool last_per_frame)
 {
     static float count = 0;
-    test4->GetPhysicsDescriptor()->GetOrigin() = { 250 + std::sinf(count / 10) * 50, 
-                                                  -250 + std::cosf(count / 10) * 50 };
+    test4->GetPhysicsDescriptor()->GetOrigin() = { 250 + std::sin(count / 10) * 50, 
+                                                  -250 + std::cos(count / 10) * 50 };
     count++;
 
     static int frame = 0;
@@ -108,5 +117,29 @@ bool TestGame::PerTick(bool last_per_frame)
         test5->GetTextureDescriptor()->GetCropOffset() = nuke::Vector2(frame * 50, 0);
     }
 
+    nuke::Color* pixel_buffer = descriptor.buffer->Lock();
+    int pitch = descriptor.buffer->Pitch();
+    for (unsigned y = 0, height = descriptor.GetHeight(); y < height; y++)
+    {
+        nuke::Color* row = pixel_buffer->GetRow(pitch, y);
+        for (unsigned x = 0, width = descriptor.GetWidth(); x < width; x++)
+        {
+            unsigned i = (x - count) * 10;
+            row[x] = { (uint8_t)i, 
+                       0, 
+                       0,
+                       (uint8_t)(255 - x * (255.f / width)), };
+        }
+    }
+    descriptor.buffer->Unlock();
+
+    return true;
+}
+
+// Called when the process exits.
+bool TestGame::Exit(bool window_closed)
+{
+    std::cout << "Game is exiting!" << std::endl;
+    std::cout << "window_closed: " << window_closed << std::endl;
     return true;
 }

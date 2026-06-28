@@ -1,5 +1,5 @@
 # Nuke
-This is the engine repository for the Nuke 2D game engine. It is written in C++17.
+This is the engine repository for the Nuke 2D game engine. It is written in C++17 and uses [SDL](https://github.com/libsdl-org/SDL) as its multimedia library.
 
 ### Using the engine
 A future SDK will be created for this engine, which will be designed to be forked from. Users may alternatively seek to write their own SDK for Nuke. This engine propagates specific headers, defindd in `include/sdk/`, featuring interfaces which SDK classes must inherit from to establish communications between the SDK and the engine.

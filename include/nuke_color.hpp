@@ -17,6 +17,13 @@ struct Color
     uint8_t g = 0;
     uint8_t b = 0;
     uint8_t a = 0;
+
+    // Returns the buffer to row y (0-indexed) of a pixel buffer, given
+    // the pitch per row of pixels.
+    inline Color* GetRow(unsigned pitch, unsigned y)
+    {
+        return &this[(pitch / 4) * y];
+    }
 };
 
 }   // namespace nuke

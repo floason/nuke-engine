@@ -12,9 +12,7 @@
 #include "nuke.hpp"
 #include "engine.hpp"
 #include "texture_base.hpp"
-#include "texture_factory.hpp"
-
-#include "texture_rect.hpp"
+#include "texture_stream.hpp"
 
 namespace nuke
 {
@@ -90,7 +88,7 @@ bool Engine::Init()
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return false;
 
-    if (!SDL_CreateWindowAndRenderer("test", 640, 480, SDL_WINDOW_HIDDEN, &window, &renderer))
+    if (!SDL_CreateWindowAndRenderer(game->GetName(), 640, 480, SDL_WINDOW_HIDDEN, &window, &renderer))
         return false;
 
     if (!game->Init())
@@ -166,13 +164,15 @@ bool Engine::Start()
     {
         // Poll for any new events before invoking the game interface.
         SDL_Event event;
+        bool window_closed = true;
         while (SDL_PollEvent(&event))
         {
             switch (event.type)
             {
                 case SDL_EVENT_QUIT:
-                    // todo: call game interface quit method
-                    return true;
+                    window_closed = false;
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                    return game->Exit(window_closed);
             }
         }
 
@@ -218,6 +218,16 @@ bool Engine::Start()
             TextureBase* texture = static_cast<TextureBase*>(texture_descriptor->GetTexture());
             if (texture == nullptr)
                 continue;
+
+            // If the texture is a TextureStream instance and its pixel buffer
+            // has been recently updated, it should be copied to the GPU.
+            if (texture->GetType() == TextureType::STREAM)
+            {
+                TextureStream* stream = static_cast<TextureStream*>(texture);
+                if (stream->descriptor_ != nullptr && stream->descriptor_->buffer->Ready())
+                    SDL_UnlockTexture(stream->Get());
+            }
+
             texture->Draw(physics->GetOrigin(), 
                           texture_descriptor->GetRenderSize(),
                           texture_descriptor);
@@ -248,7 +258,7 @@ bool Engine::Start()
         start = current_tick;
     }
 
-    return true;
+    return false;
 }
 
 // Shut down the engine. This should be called on process exit, including

@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.24)
 include(GNUInstallDirs)
 
-project(nuke VERSION 0.1.0 LANGUAGES C CXX)
+project(nuke VERSION 0.1.1 LANGUAGES C CXX)
 
 # This engine uses SDL3 so as to power the Rust 2D engine as a whole.
 option(NUKE_USE_VENDORED_SDL3 "Compile SDL3 submodule instead of using SDL3 package" OFF)
-if(NUKE_USE_VENDORED_SDL3)
+if(NOT NUKE_USE_VENDORED_SDL3)
     if(NOT SDL3_DIR)
         set(SDL3_DIR external/SDL3/cmake)
     endif()
@@ -16,7 +16,7 @@ if(NUKE_USE_VENDORED_SDL3)
     find_package(SDL3_image REQUIRED)
 else()
     add_subdirectory(submodules/SDL EXCLUDE_FROM_ALL)
-    add_subdirectory(submodules/SDL_mixer EXCLUDE_FROM_ALL)
+    add_subdirectory(submodules/SDL_image EXCLUDE_FROM_ALL)
 endif()
 
 add_library(nuke_interface INTERFACE)

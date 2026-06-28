@@ -12,6 +12,12 @@ namespace nuke
 
 REGISTER_TEXTURE("texture_rect", TextureRect);
 
+// Set the texture type to TextureType::RECT.
+TextureRect::TextureRect()
+{
+    type_ = TextureType::RECT;
+}
+
 // Draw this texture.
 // - origin - the top-left origin of the texture on the window
 // - size - the output size of the texture on the window

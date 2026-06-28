@@ -22,4 +22,10 @@ Vector2 TextureBase::GetSize()
     return Vector2(0, 0);
 }
 
+// Get the texture type.
+TextureType TextureBase::GetType()
+{
+    return type_;
+}
+
 }   // namespace nuke

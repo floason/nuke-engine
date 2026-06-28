@@ -9,7 +9,7 @@ endif()
 
 add_subdirectory(texture)
 
-add_library(nuke ${NUKE_SHARED} engine.cpp)
+add_library(nuke ${NUKE_SHARED} engine.cpp pixelbuffer.cpp)
 target_link_libraries(nuke PRIVATE nuke_interface nuke_texture SDL3::SDL3 SDL3_image::SDL3_image)
 target_include_directories(nuke 
     PUBLIC  "${PROJECT_BINARY_DIR}/configured"
@@ -17,21 +17,6 @@ target_include_directories(nuke
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 nuke_compile_export_macros(nuke)
-
-# Ensure the SDL3 shared library is present in the build directory of
-# the Nuke target for debugging.
-get_target_property(SDL3_TYPE SDL3::SDL3 TYPE)
-if (SDL3_TYPE STREQUAL "SHARED_LIBRARY")
-    add_custom_command(TARGET nuke POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL3::SDL3>
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL3_image::SDL3_image>
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        COMMENT "Copying SDL3 shared libraries to build directory."
-    )
-endif()
 
 install(TARGETS nuke 
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -14,6 +14,10 @@ namespace nuke
 class TextureRect : public TextureBase
 {
 public:
+    // Set the texture type to TextureType::RECT.
+    TextureRect();
+
+public:
     // Draw this texture.
     // - origin - the top-left origin of the texture on the window
     // - size - the output size of the texture on the window
