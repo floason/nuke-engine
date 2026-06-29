@@ -121,18 +121,10 @@ bool Engine::Init()
     return true;
 }
 
-// Create a raw texture instance with an optional parameter. Ideally, this should
-// be checked for NULL on failure before an entity takes ownership of the created 
-// texture, as the returned texture instance will otherwise not be managed!
-ITexture* Engine::CreateRawTexture(const char* texture_name, std::any optional)
-{
-    return TextureFactoryBase::Create(texture_name, optional);
-}
-
 // Precache an image texture.
 void Engine::PrecacheImage(const char* path)
 {
-    precached_images_[path] = CreateRawTexture("texture_image", path);
+    precached_images_[path] = createRawTexture("texture_image", path);
 }
 
 // Load a precached image texture. Returns NULL if not found.
@@ -298,6 +290,14 @@ bool Engine::Shutdown()
         SDL_DestroyRenderer(renderer);
     SDL_Quit();
     return true;
+}
+
+// Create a raw texture instance with an optional parameter. Ideally, this should
+// be checked for NULL on failure before an entity takes ownership of the created 
+// texture, as the returned texture instance will otherwise not be managed!
+ITexture* Engine::createRawTexture(const char* texture_name, std::any optional)
+{
+    return TextureFactoryBase::Create(texture_name, optional);
 }
 
 // Set the engine error buffer.

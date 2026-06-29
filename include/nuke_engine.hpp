@@ -6,6 +6,7 @@
 #pragma once
 
 #include <any>
+#include <tuple>
 
 #include "nuke_macros.hpp"
 
@@ -41,11 +42,6 @@ public:
     // Initialize the engine.
     virtual bool Init() = 0;
 
-    // Create a raw texture instance with an optional parameter. Ideally, this should
-    // be checked for NULL on failure before an entity takes ownership of the created 
-    // texture, as the returned texture instance will otherwise not be managed!
-    virtual ITexture* CreateRawTexture(const char* texture_name, std::any optional = std::any()) = 0;
-
     // Precache an image texture.
     virtual void PrecacheImage(const char* path) = 0;
 
@@ -60,6 +56,30 @@ public:
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.
     virtual bool Shutdown() = 0;
+
+private:
+    // Create a raw texture instance with an optional parameter. This is only used
+    // internally.
+    virtual ITexture* createRawTexture(const char* texture_name, std::any optional = std::any()) = 0;
+
+public:
+    // Create a raw texture instance with an optional parameters. Ideally, this should
+    // be checked for NULL on failure before an entity takes ownership of the created 
+    // texture, as the returned texture instance will otherwise not be managed!
+    template <typename T>
+    inline ITexture* CreateRawTexture(const char* texture_name, T arg)
+    {
+        return createRawTexture(texture_name, arg);
+    }
+
+    // Create a raw texture instance with the desired parameters. Ideally, this should
+    // be checked for NULL on failure before an entity takes ownership of the created 
+    // texture, as the returned texture instance will otherwise not be managed!
+    template <typename... Args>
+    inline ITexture* CreateRawTexture(const char* texture_name, Args&&... args)
+    {
+        return createRawTexture(texture_name, std::make_tuple(std::forward<Args>(args)...));
+    }
 };
 
 }   // namespace nuke

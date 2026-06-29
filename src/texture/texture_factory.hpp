@@ -25,6 +25,7 @@
 #include <any>
 #include <type_traits>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 #include "nuke.hpp"
@@ -79,12 +80,25 @@ protected:
     virtual ITexture* operator()(std::any value = std::any()) = 0;
 };
 
-template <typename T, typename parameter = void>
+template <typename T, typename Parameter = void>
 class TextureFactory : public TextureFactoryBase
 {
     // TextureFactory must only generate texture instances that derive from
     // TextureBase.
     static_assert(std::is_base_of<TextureBase, T>::value, "Typename must derive from TextureBase");
+
+    // is_tuple<C>::value - returns false on non-equivalent types.
+    template <typename C>
+    struct is_tuple : std::false_type { };
+
+    // is_tuple<C>::value - returns true on equivalent types.
+    template <typename... Args>
+    struct is_tuple<std::tuple<Args...>> : std::true_type { };
+
+    // Compile-time expression of is_tuple<C>.
+    template <typename C>
+    static inline constexpr bool is_tuple_v = 
+        is_tuple<std::remove_cv_t<std::remove_reference_t<C>>>::value;
 
 public:
     TextureFactory(const char* name) : 
@@ -98,10 +112,22 @@ protected:
         // Whether the texture being instantiated requires an additional parameter
         // is evaluated at compile-time, thus the designated texture class does not 
         // require both constuctors to be defined to compile successfully.
-        if constexpr (std::is_same_v<parameter, void>)
+        if constexpr (std::is_same_v<Parameter, void>)
             return new T();
+        
+        // If a tuple is provided, propagate all its elements as separate parameters.
+        else if constexpr (is_tuple_v<Parameter>)
+        {
+            auto call_ctor = [](auto&&... args)
+            {
+                return new T(std::forward<decltype(args)>(args)...);
+            };
+            return std::apply(call_ctor, std::any_cast<Parameter>(value));
+        }
+
+        // If a single parameter was provided, cast it and pass it standalone.
         else
-            return new T(std::any_cast<parameter>(value));
+            return new T(std::any_cast<Parameter>(value));
     }
 };
 

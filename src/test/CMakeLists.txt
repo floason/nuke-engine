@@ -7,7 +7,9 @@ target_link_libraries(nuke_test PRIVATE
 
     # If compiled statically, all object files must be linked, otherwise
     # not all textures will be compiled!
-    "$<LINK_LIBRARY:WHOLE_ARCHIVE,nuke>"
+    $<IF:$<STREQUAL:$<TARGET_PROPERTY:nuke,TYPE>,STATIC_LIBRARY>,
+        $<LINK_LIBRARY:WHOLE_ARCHIVE,nuke>,
+        nuke>
 )
 target_include_directories(nuke_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

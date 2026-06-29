@@ -33,11 +33,6 @@ public:
 
     // Initialize the engine.
     virtual bool Init() override;
-    
-    // Create a raw texture instance with an optional parameter. Ideally, this should
-    // be checked for NULL on failure before an entity takes ownership of the created 
-    // texture, as the returned texture instance will otherwise not be managed!
-    virtual ITexture* CreateRawTexture(const char* texture_name, std::any optional = std::any()) override;
 
     // Precache an image texture.
     virtual void PrecacheImage(const char* path) override;
@@ -53,6 +48,11 @@ public:
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.
     virtual bool Shutdown() override;
+
+private:
+    // Create a raw texture instance with an optional parameter. This is only used
+    // internally.
+    virtual ITexture* createRawTexture(const char* texture_name, std::any optional = std::any()) override;
 
 public:
     // Set the engine error buffer.
