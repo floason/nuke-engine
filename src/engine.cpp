@@ -88,11 +88,36 @@ bool Engine::Init()
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return false;
 
+    // Before calling IGame::Init(), the SDL renderer must be set up. This
+    // requires a window to be spawned, so it is hidden until the main loop is
+    // started. Initiating the renderer is required for managing SDL-related
+    // assets, particularly textures.
     if (!SDL_CreateWindowAndRenderer(game->GetName(), 640, 480, SDL_WINDOW_HIDDEN, &window, &renderer))
         return false;
 
+    // A 16x16 "missing texture" texture is generated in place of any textures
+    // that fail to load (for texture instances which inherit TextureSDL).
+    Color* pixels;
+    int pitch;
+    missing_texture_ = SDL_CreateTexture(renderer,
+                                         SDL_PIXELFORMAT_RGBA32,
+                                         SDL_TEXTUREACCESS_STREAMING,
+                                         16,
+                                         16);
+    if (missing_texture_ == nullptr)
+        return false;
+    SDL_LockTexture(missing_texture_, NULL, reinterpret_cast<void**>(&pixels), &pitch);
+    for (int y = 0; y < 16; y++)
+    {
+        Color* row = pixels->GetRow(pitch, y);
+        for (int x = 0; x < 16; x++)
+            row[x] = { static_cast<uint8_t>((x == y || (15 - x) == y) ? 255 : 0), 0, 0, 255 };
+    }
+    SDL_UnlockTexture(missing_texture_);
+
     if (!game->Init())
         return false;
+
     return true;
 }
 
@@ -265,10 +290,12 @@ bool Engine::Start()
 // on engine init failure.
 bool Engine::Shutdown()
 {
-    if (engine.window != nullptr)
-        SDL_DestroyWindow(engine.window);
-    if (engine.renderer != nullptr)
-        SDL_DestroyRenderer(engine.renderer);
+    if (missing_texture_ != nullptr)
+        SDL_DestroyTexture(missing_texture_);
+    if (window != nullptr)
+        SDL_DestroyWindow(window);
+    if (renderer != nullptr)
+        SDL_DestroyRenderer(renderer);
     SDL_Quit();
     return true;
 }
@@ -277,6 +304,12 @@ bool Engine::Shutdown()
 void Engine::SetErrorBuffer(const char* error)
 {
     std::strncpy(error_, error, sizeof(error_));
+}
+
+// Get the "missing texture" texture.
+SDL_Texture* Engine::GetMissingTexture()
+{
+    return missing_texture_;
 }
 
 }   // namespace nuke

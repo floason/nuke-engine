@@ -21,7 +21,7 @@ TextureImage::TextureImage(const char* path)
 
     SDL_Texture* texture = IMG_LoadTexture(engine.renderer, path);
     if (texture == NULL)
-        return;
+        texture = engine.GetMissingTexture();
 
     texture_.reset(texture);
     path_ = path;

@@ -3,9 +3,6 @@
 
 // Defines the base texture class for all Nuke textures to inherit from.
 
-// TODO in the future: replace textures module with single texture class that loads from
-// nuke texture file format? This would make obsolete the weird factory design....
-
 #pragma once
 
 #include "nuke.hpp"

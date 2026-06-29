@@ -17,6 +17,9 @@
 
 // This might just be the worst C++ code I've ever written.
 
+// TODO in the future: replace textures module with single texture class that loads from
+// nuke texture file format?
+
 #pragma once
 
 #include <any>

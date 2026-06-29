@@ -58,13 +58,17 @@ public:
     // Set the engine error buffer.
     void SetErrorBuffer(const char* error);
 
+    // Get the "missing texture" texture.
+    SDL_Texture* GetMissingTexture();
+
 public:
-    SDL_Renderer* renderer;
-    SDL_Window* window;
-    IEntityManager* entity_manager;
-    IGame* game;
+    SDL_Renderer* renderer                                          = nullptr;
+    SDL_Window* window                                              = nullptr;
+    IEntityManager* entity_manager                                  = nullptr;
+    IGame* game                                                     = nullptr;
     
 private:
+    SDL_Texture* missing_texture_                                   = nullptr;
     std::unordered_map<std::string, ITexture*> precached_images_;
     char error_[256];
 };
