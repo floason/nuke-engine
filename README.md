@@ -10,6 +10,7 @@ When configuring Nuke with CMake before building, the following options are avai
 - - If this option is disabled, by default FindSDL and FindSDL_mixer will search for your devel libraries in external/SDL3/cmake and external/SDL3_image/cmake respectively, alongside any system install paths. This can be changed by modifying `SDL3_DIR` and `SDL3_image_DIR` respectively.
 - `NUKE_BUILD_TEST` (default: OFF) - builds the test executable for directly interfacing with the Nuke engine library.
 - `NUKE_BUILD_SHARED` (default: ON) - this dictates whether Nuke specifically (rather than all targets via `BUILD_SHARED_LIBS`) is built as a static or shared library. Note that when compiled as a static library, the whole archive should be linked. See [CMake's generator expression for linking an entire static library](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#genex:LINK_LIBRARY) via the `WHOLE_ARCHIVE` linker feature.
+- `NUKE_LINK_SDL3_STATIC` (default: OFF) - due to the complexities involved with building SDL3 and SDL3_image statically, it is recommended that this option is toggled instead for linking SDL3/SDL3_image as static libraries.
 
 ### Building
 This repository uses CMake 3.24 and up for building. Both single- and multi-config generators are supported.

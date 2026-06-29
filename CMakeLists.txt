@@ -5,18 +5,52 @@ project(nuke VERSION 0.1.2 LANGUAGES C CXX)
 
 # This engine uses SDL3 so as to power the Rust 2D engine as a whole.
 option(NUKE_USE_VENDORED_SDL3 "Compile SDL3 submodule instead of using SDL3 package" OFF)
+option(NUKE_LINK_SDL3_STATIC "Link SDL3/SDL3_image as static libraries" OFF)
+
 if(NOT NUKE_USE_VENDORED_SDL3)
-    if(NOT SDL3_DIR)
-        set(SDL3_DIR external/SDL3/cmake)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3")
+        list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3/cmake")
     endif()
-    if(NOT SDL3_image_DIR)
-        set(SDL3_image_DIR external/SDL3_image/cmake)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_image")
+        list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_image/cmake")
     endif()
-    find_package(SDL3 REQUIRED)
-    find_package(SDL3_image REQUIRED)
+
+    if(NUKE_LINK_SDL3_STATIC)
+        find_package(SDL3 REQUIRED COMPONENTS SDL3-static)
+        find_package(SDL3_image REQUIRED COMPONENTS SDL3_image-static)
+    else()
+        find_package(SDL3 REQUIRED COMPONENTS SDL3-shared)
+        find_package(SDL3_image REQUIRED COMPONENTS SDL3_image-shared)
+    endif()
 else()
-    add_subdirectory(submodules/SDL EXCLUDE_FROM_ALL)
+    set(NUKE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+
+    if(NUKE_LINK_SDL3_STATIC)
+        set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+        set(SDL_STATIC ON CACHE BOOL "" FORCE)
+        set(SDLIMAGE_SHARED OFF CACHE BOOL "" FORCE)
+        set(SDLIMAGE_STATIC ON CACHE BOOL "" FORCE)
+
+        add_subdirectory(submodules/SDL)
+
+        # For some reason, SDL_image's CMakeLists.txt decides which SDL3 target
+        # to link against based on the value of SDLIMAGE_BUILD_SHARED_LIBS...
+        # which by default is set to ${BUILD_SHARED_LIBS}. This needs to be
+        # forcibly overwritten based on how SDL3 is being linked by Nuke!
+        set(BUILD_SHARED_LIBS OFF)
+    else()
+        set(SDL_SHARED ON CACHE BOOL "" FORCE)
+        set(SDL_STATIC OFF CACHE BOOL "" FORCE)
+        set(SDLIMAGE_SHARED ON CACHE BOOL "" FORCE)
+        set(SDLIMAGE_STATIC OFF CACHE BOOL "" FORCE)
+
+        add_subdirectory(submodules/SDL EXCLUDE_FROM_ALL)
+
+        set(BUILD_SHARED_LIBS ON)
+    endif()
+
     add_subdirectory(submodules/SDL_image EXCLUDE_FROM_ALL)
+    set(BUILD_SHARED_LIBS ${NUKE_BUILD_SHARED_LIBS})
 endif()
 
 add_library(nuke_interface INTERFACE)
