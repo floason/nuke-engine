@@ -9,6 +9,7 @@
 #include <tuple>
 
 #include "nuke_macros.hpp"
+#include "nuke_math.hpp"
 
 namespace nuke
 {
@@ -38,6 +39,9 @@ public:
 
     // Aggregate the game interface instance.
     virtual void SetGameInterface(IGame* game) = 0;
+
+    // Get a reference to the camera vector.
+    virtual Vector2& GetCameraOrigin() = 0;
 
     // Initialize the engine.
     virtual bool Init() = 0;

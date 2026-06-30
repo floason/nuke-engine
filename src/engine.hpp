@@ -40,6 +40,9 @@ public:
     // Load a precached image texture. Returns NULL if not found.
     virtual ITexture* LoadImage(const char* path) override;
 
+    // Get a reference to the camera vector.
+    virtual Vector2& GetCameraOrigin() override;
+
     // Start the engine and call into the game interface. This should be called only
     // after initialising the engine. This must be called from the main thread. This
     // method will block.
@@ -69,6 +72,7 @@ public:
     
 private:
     SDL_Texture* missing_texture_                                   = nullptr;
+    Vector2 camera_origin_                                          = { 0.f, 0.f };
     std::unordered_map<std::string, ITexture*> precached_images_;
     char error_[256];
 };

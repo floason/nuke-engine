@@ -95,6 +95,18 @@ struct Vector2
 namespace math
 {
 
+// Mathematical constants.
+struct pi
+{
+    static constexpr long double d = 3.14159265358979323846;
+    static constexpr float f = static_cast<float>(d);
+};
+struct e
+{
+    static constexpr long double d = 2.71828182845904523536;
+    static constexpr float f = static_cast<float>(d);
+};
+
 // Returns the lesser of two numbers.
 template <typename T>
 static inline T min(T lhs, T rhs)

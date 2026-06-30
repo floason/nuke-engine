@@ -136,6 +136,12 @@ ITexture* Engine::LoadImage(const char* path)
     return texture->second;
 }
 
+// Get a reference to the camera vector.
+Vector2& Engine::GetCameraOrigin()
+{
+    return camera_origin_;
+}
+
 // Start the engine and call into the game interface. This should be called only
 // after initialising the engine. This must be called from the main thread. This
 // method will block.
@@ -245,7 +251,7 @@ bool Engine::Start()
                     SDL_UnlockTexture(stream->Get());
             }
 
-            texture->Draw(physics->GetOrigin(), 
+            texture->Draw(physics->GetOrigin() - camera_origin_, 
                           texture_descriptor->GetRenderSize(),
                           texture_descriptor);
         }
@@ -267,7 +273,7 @@ bool Engine::Start()
         // Update frame-specific common variables information.
         current_tick = SDL_GetTicksNS();
         frametime = current_tick - start;
-        vars.frametime = ((float)frametime / NUKE_NS_PER_S);
+        vars.frametime += ((float)frametime / NUKE_NS_PER_S);
         vars.curtime += vars.frametime;
         vars.frames++;
 

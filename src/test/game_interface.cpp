@@ -97,16 +97,21 @@ bool TestGame::Init()
 // Per-frame method which is invoked by the engine after starting.
 bool TestGame::PerFrame()
 {
+    if (commonvars.frametime > 10)
+    {
+        nuke::Vector2& camera = engine->GetCameraOrigin();
+        camera.x = std::sin((commonvars.frametime - 10) * 5) * 50;
+        camera.y = std::cos((commonvars.frametime - 10) * 5) * 50;
+    }
+
     return true;
 }
 
 // Per-tick method which is invoked by the engine after starting.
 bool TestGame::PerTick(bool last_per_frame)
 {
-    static float count = 0;
-    test4->GetPhysicsDescriptor()->GetOrigin() = { 250 + std::sin(count / 10) * 50, 
-                                                  -250 + std::cos(count / 10) * 50 };
-    count++;
+    test4->GetPhysicsDescriptor()->GetOrigin() = { 250 + std::sin(commonvars.ticks / 10.f) * 50, 
+                                                  -250 + std::cos(commonvars.ticks / 10.f) * 50 };
 
     static int frame = 0;
     static int direction = 1;
@@ -124,7 +129,7 @@ bool TestGame::PerTick(bool last_per_frame)
         nuke::Color* row = pixel_buffer->GetRow(pitch, y);
         for (unsigned x = 0, width = descriptor.GetWidth(); x < width; x++)
         {
-            unsigned i = (x - count) * 10;
+            unsigned i = (x - commonvars.ticks) * 10;
             row[x] = { (uint8_t)i, 
                        0, 
                        0,
