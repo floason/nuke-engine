@@ -9,6 +9,12 @@
 namespace nuke
 {
 
+// Has the texture loaded successfully?
+const bool TextureBase::Loaded() const
+{
+    return loaded_;
+}
+
 // Get the path of the loaded texture, if applicable. This assumes the
 // buffer used for the path name has not been changed/de-allocated().
 const char* TextureBase::GetLoadedPath() const
@@ -20,12 +26,6 @@ const char* TextureBase::GetLoadedPath() const
 Vector2 TextureBase::GetSize()
 {
     return Vector2(0, 0);
-}
-
-// Get the texture type.
-TextureType TextureBase::GetType()
-{
-    return type_;
 }
 
 }   // namespace nuke

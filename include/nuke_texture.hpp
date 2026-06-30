@@ -17,6 +17,9 @@ public:
     virtual ~ITexture() = default;
 
 public:
+    // Has the texture loaded successfully?
+    virtual const bool Loaded() const = 0;
+
     // Get the path of the loaded texture, if applicable. This is only valid
     // so long as the texture is alive.
     virtual const char* GetLoadedPath() const = 0;

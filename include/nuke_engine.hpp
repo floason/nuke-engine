@@ -16,7 +16,11 @@ namespace nuke
 
 class IGame;
 class ITexture;
+class ISound;
 class IEntityManager;
+
+// On next tick function type. See IEngine::OnNextTick().
+using FuncOnNextTick = void (*)(void* userdata);
 
 class IEngine
 {
@@ -52,10 +56,33 @@ public:
     // Load a precached image texture.
     virtual ITexture* LoadImage(const char* path) = 0;
 
+    // Precache a sound path.
+    virtual void PrecacheSound(const char* path) = 0;
+
+    // Create a raw sound instance utilising a pre-existing float signed sample
+    // PCM buffer for the audio data, alongside frequency and channel information.
+    // The buffer must be alive for the entire duration of this sound instance.
+    virtual ISound* CreateRawSound(const void* data, size_t len, int channels, int frequency) = 0;
+
+    // Load a precached sound. Because the same sound instance will always be
+    // returned, the track used for the returned sound will be the same, meaning
+    // playing the sound while it is already playing will just restart it, rather
+    // than play both sounds simultaneously.
+    virtual ISound* LoadSound(const char* path) = 0;
+
+    // Copy a sound instance to create a new track. This sound instance does not
+    // copy the base sound's underlying audio data, therefore the base sound must
+    // be alive for the entire duration of this copy! Returns NULL if the base
+    // sound instance did not load successfully.
+    virtual ISound* CopySound(ISound* other, bool free_after_play = true) = 0;
+
     // Start the engine and call into the game interface. This should be called only
     // after initialising the engine. This must be called from the main thread. This
     // method will block.
     virtual bool Start() = 0;
+
+    // Create a callback timer that fires on the next tick.
+    virtual void OnNextTick(FuncOnNextTick func, void* userdata = nullptr) = 0;
 
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.

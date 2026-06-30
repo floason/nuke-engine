@@ -20,8 +20,14 @@ TextureImage::TextureImage(const char* path)
     type_ = TextureType::IMAGE;
 
     SDL_Texture* texture = IMG_LoadTexture(engine.renderer, path);
-    if (texture == NULL)
+    if (texture == nullptr)
+    {
         texture = engine.GetMissingTexture();
+        path_ = std::string("MISSING-") + path;
+        loaded_ = false;
+    }
+    else
+        path_ = path;
 
     texture_.reset(texture);
     path_ = path;

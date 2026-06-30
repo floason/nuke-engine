@@ -6,6 +6,7 @@
 #pragma once
 
 #include "nuke_commonvars.hpp"
+#include "nuke_math.hpp"
 
 namespace nuke
 {
@@ -20,6 +21,9 @@ public:
 
     // Get the name of the game.
     virtual const char* GetName() = 0;
+
+    // Get the size of the game window.
+    virtual Vector2 GetSize() = 0;
 
     // Return the tickrate used for simulating physics and logic.
     virtual float GetTickRate() = 0;

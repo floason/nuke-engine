@@ -27,7 +27,10 @@ TextureStream::TextureStream(PixelBufferDescriptor* descriptor) :
         descriptor->GetHeight()
     );
     if (texture == nullptr)
+    {
         texture = engine.GetMissingTexture();
+        loaded_ = false;
+    }
 
     descriptor->buffer = new PixelBuffer(texture);
     texture_.reset(texture);

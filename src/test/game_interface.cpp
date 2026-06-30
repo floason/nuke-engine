@@ -20,6 +20,9 @@ static TestEntity* test4;
 static TestEntity* test5;
 static nuke::PixelBufferDescriptor descriptor(100, 100);
 
+static float test4_x_base = 320;
+static float test4_y_base = -240;
+
 // Get a reference to the game's common variables struct.
 nuke::CommonVars& TestGame::GetCommonVars()
 {
@@ -30,6 +33,12 @@ nuke::CommonVars& TestGame::GetCommonVars()
 const char* TestGame::GetName()
 {
     return "NUKE ENGINE REPO - TEST GAME";
+}
+
+// Get the size of the game window.
+nuke::Vector2 TestGame::GetSize()
+{
+    return { 640, 480 };   
 }
 
 // Return the tickrate used for simulating physics.
@@ -56,6 +65,7 @@ bool TestGame::Init()
 {
     engine->PrecacheImage("C:/Windows/Web/Wallpaper/Windows/img0.jpg");
     engine->PrecacheImage("E:/test.png");
+    engine->PrecacheSound("C:/Windows/Media/Alarm01.wav");
 
     TestEntity* test = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
     test->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
@@ -75,8 +85,10 @@ bool TestGame::Init()
     test4->GetTextureDescriptor()->SetTexture(
         engine->LoadImage("C:/Windows/Web/Wallpaper/Windows/img0.jpg"));
     test4->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
+    test4->GetPhysicsDescriptor()->GetMaxs() = { 25, -25 };
+    test4->GetPhysicsDescriptor()->GetMins() = { -25, 25 };
     test4->GetTextureDescriptor()->GetScale() = true;
-    test4->GetPhysicsDescriptor()->GetOrigin() = { 250, -250 };
+    test4->GetPhysicsDescriptor()->GetOrigin() = { test4_x_base, test4_y_base };
 
     test5 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
     test5->GetTextureDescriptor()->SetTexture(
@@ -90,6 +102,15 @@ bool TestGame::Init()
     test6->GetTextureDescriptor()->OwnTexture();
     test6->GetTextureDescriptor()->GetRenderSize() = { 100, 100 };
     test6->GetPhysicsDescriptor()->GetOrigin() = { 50, -330 };
+
+    TestEntity* cursor = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    cursor->GetTextureDescriptor()->GetRenderSize() = { 1, 1 };
+    cursor->GetPhysicsDescriptor()->GetOrigin() = { 320, -240 };
+
+    nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
+    sound->Play(true);
+    sound->SetParentEntity(test4);
+    sound->SetMaxDistance(2000);
 
     return true;
 }
@@ -110,8 +131,8 @@ bool TestGame::PerFrame()
 // Per-tick method which is invoked by the engine after starting.
 bool TestGame::PerTick(bool last_per_frame)
 {
-    test4->GetPhysicsDescriptor()->GetOrigin() = { 250 + std::sin(commonvars.ticks / 10.f) * 50, 
-                                                  -250 + std::cos(commonvars.ticks / 10.f) * 50 };
+    test4->GetPhysicsDescriptor()->GetOrigin() = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
+                                                   test4_y_base + std::cos(commonvars.ticks / 10.f) * 50 };
 
     static int frame = 0;
     static int direction = 1;

@@ -23,6 +23,9 @@ enum class TextureType
 class TextureBase : public ITexture
 {
 public:
+    // Has the texture loaded successfully?
+    virtual const bool Loaded() const override;
+
     // Get the path of the loaded texture, if applicable. This assumes the
     // buffer used for the path name has not been changed/de-allocated().
     virtual const char* GetLoadedPath() const override;
@@ -42,10 +45,14 @@ public:
 
 public:
     // Get the texture type.
-    TextureType GetType();
+    inline TextureType GetType()
+    {
+        return type_;
+    }
 
 protected:
     TextureType type_ = TextureType::BASE;
+    bool loaded_ = true;
 };
 
 }   // namespace nuke

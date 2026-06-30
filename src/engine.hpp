@@ -7,12 +7,14 @@
 
 #include <unordered_map>
 #include <SDL3/SDL.h>
+#include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
 
 namespace nuke
 {
 
+// Engine class which incorporates the IEngine interface.
 class Engine : public IEngine
 {
 public:
@@ -40,6 +42,26 @@ public:
     // Load a precached image texture. Returns NULL if not found.
     virtual ITexture* LoadImage(const char* path) override;
 
+    // Precache a sound path.
+    virtual void PrecacheSound(const char* path) override;
+
+    // Create a raw sound instance utilising a pre-existing float signed sample
+    // PCM buffer for the audio data, alongside frequency and channel information.
+    // The buffer must be alive for the entire duration of this sound instance.
+    virtual ISound* CreateRawSound(const void* data, size_t len, int channels, int frequency) override;
+
+    // Load a precached sound. Because the same sound instance will always be
+    // returned, the track used for the returned sound will be the same, meaning
+    // playing the sound while it is already playing will just restart it, rather
+    // than play both sounds simultaneously.
+    virtual ISound* LoadSound(const char* path) override;
+
+    // Copy a sound instance to create a new track. This sound instance does not
+    // copy the base sound's underlying audio data, therefore the base sound must
+    // be alive for the entire duration of this copy! Returns NULL if the base
+    // sound instance did not load successfully.
+    virtual ISound* CopySound(ISound* other, bool free_after_play = true) override;
+
     // Get a reference to the camera vector.
     virtual Vector2& GetCameraOrigin() override;
 
@@ -47,6 +69,9 @@ public:
     // after initialising the engine. This must be called from the main thread. This
     // method will block.
     virtual bool Start() override;
+
+    // Create a callback timer that fires on the next tick.
+    virtual void OnNextTick(FuncOnNextTick func, void* userdata = nullptr) override;
 
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.
@@ -67,14 +92,32 @@ public:
 public:
     SDL_Renderer* renderer                                          = nullptr;
     SDL_Window* window                                              = nullptr;
+    MIX_Mixer* mixer                                                = nullptr;
     IEntityManager* entity_manager                                  = nullptr;
     IGame* game                                                     = nullptr;
+    Vector2 screen_origin                                           = { 0.f, 0.f };
+    Vector2 camera_origin                                           = { 0.f, 0.f };
     
 private:
     SDL_Texture* missing_texture_                                   = nullptr;
-    Vector2 camera_origin_                                          = { 0.f, 0.f };
     std::unordered_map<std::string, ITexture*> precached_images_;
+    std::unordered_map<std::string, ISound*> precached_sounds_;
     char error_[256];
+
+    // Defines the function and userdata parameter of a next-tick function call.
+    struct NextTickFuncData
+    {
+        NextTickFuncData(FuncOnNextTick func, void* userdata) :
+            func(func),
+            userdata(userdata)
+        {
+        }
+
+        FuncOnNextTick func;
+        void* userdata;
+    };
+    std::vector<NextTickFuncData> next_tick_funcs_;
+    std::vector<NextTickFuncData> current_tick_funcs_;
 };
 
 extern Engine engine;

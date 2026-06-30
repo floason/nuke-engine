@@ -87,6 +87,7 @@ void TextureDescriptor::SetTexture(nuke::ITexture* texture, bool set_bounds)
         if (physics != nullptr)
         {
             nuke::Vector2 maxs = texture->GetSize() / 2.f;
+            maxs.y = -maxs.y;
             physics->GetMaxs() = maxs;
             physics->GetMins() = -maxs;
         }
@@ -148,7 +149,7 @@ nuke::IEntity* TestEntityManager::CreateEntity(const char* name)
 // Returns NULL when all entities have been traversed.
 nuke::IEntity* TestEntityManager::GetEntity(nuke::IEntity* first)
 {
-    if (first == NULL)
+    if (first == nullptr)
         return !entities_.empty() ? entities_.front() : nullptr;
     auto next = std::next(static_cast<TestEntity*>(first)->it_);
     return (next != entities_.end()) ? *next : nullptr;

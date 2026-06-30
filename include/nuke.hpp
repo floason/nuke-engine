@@ -12,6 +12,7 @@
 #include "nuke_pixelbuffer.hpp"
 #include "nuke_commonvars.hpp"
 #include "nuke_texture.hpp"
+#include "nuke_sound.hpp"
 #include "nuke_engine.hpp"
 
 #include "sdk/nuke_gameinterface.hpp"

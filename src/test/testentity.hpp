@@ -8,7 +8,7 @@
 #include "nuke.hpp"
 
 // TODO: use std::vector<T> for final sdk due to cache locality
-typedef std::forward_list<nuke::IEntity*> entity_list;
+using entity_list = std::forward_list<nuke::IEntity*>;
 
 class PhysicsDescriptor : public nuke::IPhysicsDescriptor
 {

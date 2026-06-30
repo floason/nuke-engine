@@ -16,6 +16,9 @@ public:
     // Get the name of the game.
     virtual const char* GetName() override;
 
+    // Get the size of the game window.
+    virtual nuke::Vector2 GetSize() override;
+
     // Return the tickrate used for simulating physics and logic.
     virtual float GetTickRate() override;
 
