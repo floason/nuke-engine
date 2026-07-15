@@ -47,5 +47,6 @@ public:
 
 extern nuke::IEngine* engine;
 extern nuke::IRenderer* renderer;
+extern nuke::CameraContext* camera;
 extern TestGame* game;
 extern TestEntityManager* entity_manager;

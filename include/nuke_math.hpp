@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cmath>
+#include <cassert>
 
 namespace nuke
 {
@@ -137,6 +138,23 @@ static inline T lerp(T a, T b, float t)
         return a * (1 - t) + t * b;
     else
         return a + (b - a) * t;
+}
+
+// Remap a value from [A, B] to [C, D].
+template <typename T>
+static inline T remap(T val, float a, float b, float c, float d)
+{
+    assert(b != a && "b must not be equal to a!");
+    return c + (d - c) * (val - a) / (b - a);
+}
+
+// Remap a value from [A, B] to [C, D] and clamp the result.
+template <typename T>
+static inline T remap_clamped(T val, float a, float b, float c, float d)
+{
+    assert(b != a && "b must not be equal to a!");
+    float scale = min(max((val - a) / (b - a), 0.f), 1.f);
+    return c + (d - c) * scale;
 }
 
 }   // namespace math

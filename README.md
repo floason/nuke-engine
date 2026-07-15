@@ -2,7 +2,7 @@
 This is the engine repository for the Nuke 2D game engine. It is written in C++17 and uses [SDL](https://github.com/libsdl-org/SDL) as its multimedia library.
 
 ### Using the engine
-A future SDK will be created for this engine, which will be designed to be forked from. Users may alternatively seek to write their own SDK for Nuke. This engine propagates specific headers, defindd in `include/sdk/`, featuring interfaces which SDK classes must inherit from to establish communications between the SDK and the engine.
+A future SDK will be created for this engine, which will be designed to be forked from. Users may alternatively seek to write their own SDK for Nuke. This engine propagates specific headers, defined in `include/sdk/`, featuring interfaces which SDK classes must inherit from to establish communications between the SDK and the engine.
 
 ### Configuration
 When configuring Nuke with CMake before building, the following options are available:
@@ -17,7 +17,8 @@ This repository uses CMake 3.24 and up for building. Both single- and multi-conf
 
 ### Dependencies
 - [SDL3](https://github.com/libsdl-org/SDL)
+- [SDL3_image](https://github.com/libsdl-org/SDL_image)
 - [SDL3_mixer](https://github.com/libsdl-org/SDL_mixer)
 
 ### Credits
-Some of the design philosophy is inspired by [Valve's Source game engine](https://github.com/valvesoftware/source-sdk-2013).
+Some of the design philosophy is inspired by [Valve's Source game engine and its respective SDK](https://github.com/valvesoftware/source-sdk-2013).

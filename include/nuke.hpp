@@ -7,10 +7,12 @@
 
 #include "nuke_version.hpp"
 #include "nuke_macros.hpp"
+#include "nuke_updatable.hpp"
 #include "nuke_math.hpp"
 #include "nuke_color.hpp"
 #include "nuke_pixelbuffer.hpp"
 #include "nuke_commonvars.hpp"
+#include "nuke_camera.hpp"
 #include "nuke_texture.hpp"
 #include "nuke_sound.hpp"
 #include "nuke_engine.hpp"

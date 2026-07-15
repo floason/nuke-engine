@@ -27,6 +27,7 @@ int main()
         return EXIT_FAILURE;
 
     renderer = engine->GetRenderer();
+    camera = engine->GetCameraView();
 
     engine->SetGameInterface(game);
     engine->PrintVersion();

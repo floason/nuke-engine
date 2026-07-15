@@ -35,6 +35,12 @@ IRenderer* Engine::GetRenderer()
     return &renderer;
 }
 
+// Get the camera view.
+CameraContext* Engine::GetCameraView()
+{
+    return &camera_context;
+}
+
 // Print the engine version string.
 void Engine::PrintVersion()
 {
@@ -97,7 +103,7 @@ bool Engine::Init()
     if ((mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr)) == nullptr)
         return false;
 
-    screen_origin = { size.x / 2.f, -size.y / 2.f };
+    camera_context.attenuation_offset = Vector2(size.x / 2.f, -size.y / 2.f);
     if (!game->Init())
         return false;
 
@@ -156,10 +162,13 @@ ISound* Engine::CopySound(ISound* other, bool free_after_play)
     return copy;
 }
 
-// Get a reference to the camera vector.
-Vector2& Engine::GetCameraOrigin()
+// Dispatch an updatable's invokation at a later time period.
+void Engine::DispatchUpdate(Updatable* updatable, float time_of_dispatch)
 {
-    return camera_origin;
+    assert(updatable != nullptr && "Updatable must not be nullptr.");
+
+    updatable->time_of_dispatch = time_of_dispatch;
+    updatables_.push_back(updatable);
 }
 
 // Start the engine and call into the game interface. This should be called only
@@ -219,13 +228,23 @@ bool Engine::Start()
                 if (!game->PerTick(i + 1 == count))
                     break;
 
-                // Call all next tick functions.
-                current_tick_funcs_.swap(next_tick_funcs_);
-                for (const auto& elem : current_tick_funcs_)
-                    elem.func(elem.userdata);
-                current_tick_funcs_.clear();
+                // Iterate through each updatable and dispatch their set update
+                // functions when desired. It is possible that an updatable may
+                // re-insert itself during dispatch; these should not be
+                // processed now.
+                std::vector<Updatable*> to_traverse;
+                to_traverse.swap(updatables_);
+                for (int obj_i = 0, size = to_traverse.size(); obj_i < size; obj_i++)
+                {
+                    Updatable* updatable = to_traverse[obj_i];
+                    if (vars.curtime >= updatable->time_of_dispatch)
+                        updatable->Update();
+                    else
+                        updatables_.push_back(updatable);
+                }
                 
                 vars.ticks++;
+                vars.curtime += vars.tick_interval;
             }
             last_tick_timestamp += game_tick_interval * count;
         }
@@ -251,8 +270,8 @@ bool Engine::Start()
         // Update frame-specific common variables information.
         current_tick = SDL_GetTicksNS();
         frametime = current_tick - start;
-        vars.frametime += ((float)frametime / NUKE_NS_PER_S);
-        vars.curtime += vars.frametime;
+        vars.frametime = ((float)frametime / NUKE_NS_PER_S);
+        vars.realtime += vars.frametime;
         vars.frames++;
 
         // Set the start timestamp for the next interval.
@@ -260,12 +279,6 @@ bool Engine::Start()
     }
 
     return false;
-}
-
-// Create a callback timer that fires on the next tick.
-void Engine::OnNextTick(FuncOnNextTick func, void* userdata)
-{
-    next_tick_funcs_.emplace_back(func, userdata);
 }
 
 // Shut down the engine. This should be called on process exit, including

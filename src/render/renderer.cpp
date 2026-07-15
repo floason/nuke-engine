@@ -101,12 +101,12 @@ void Renderer::DrawFrame()
     for (const auto& renderable : renderables_)
     {
         TextureBase* texture = static_cast<TextureBase*>(renderable.context->texture);
+        Vector2 centre_origin = renderable.context->origin - engine.camera_context.camera_offset;
         switch (texture->GetType())
         {
             case TextureType::TextureRect:
             {
-                static_cast<TextureRect*>(texture)->Draw(renderable.context->origin - engine.camera_origin,
-                                                         *renderable.context);
+                static_cast<TextureRect*>(texture)->Draw(centre_origin, *renderable.context);
                 break;
             }
 
@@ -124,8 +124,7 @@ void Renderer::DrawFrame()
 
             case TextureType::TextureImage:
             {
-                static_cast<TextureSDL*>(texture)->Draw(renderable.context->origin - engine.camera_origin,
-                                                        *renderable.context);
+                static_cast<TextureSDL*>(texture)->Draw(centre_origin, *renderable.context);
                 break;
             }
 

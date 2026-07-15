@@ -24,6 +24,9 @@ public:
     // Get the renderer interface.
     virtual IRenderer* GetRenderer() override;
 
+    // Get the camera view.
+    virtual CameraContext* GetCameraView() override;
+
     // Print the engine version string.
     virtual void PrintVersion() override;
     
@@ -65,16 +68,13 @@ public:
     // sound instance did not load successfully.
     virtual ISound* CopySound(ISound* other, bool free_after_play = true) override;
 
-    // Get a reference to the camera vector.
-    virtual Vector2& GetCameraOrigin() override;
+    // Dispatch an updatable's invokation at a later time period.
+    virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) override;
 
     // Start the engine and call into the game interface. This should be called only
     // after initialising the engine. This must be called from the main thread. This
     // method will block.
     virtual bool Start() override;
-
-    // Create a callback timer that fires on the next tick.
-    virtual void OnNextTick(FuncOnNextTick func, void* userdata = nullptr) override;
 
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.
@@ -95,8 +95,7 @@ public:
     
     MIX_Mixer* mixer                                                = nullptr;
     IGame* game                                                     = nullptr;
-    Vector2 screen_origin                                           = { 0.f, 0.f };
-    Vector2 camera_origin                                           = { 0.f, 0.f };
+    CameraContext camera_context;
     
 private:
     
@@ -104,20 +103,9 @@ private:
     std::unordered_map<std::string, ISound*> precached_sounds_;
     char error_[256];
 
-    // Defines the function and userdata parameter of a next-tick function call.
-    struct NextTickFuncData
-    {
-        NextTickFuncData(FuncOnNextTick func, void* userdata) :
-            func(func),
-            userdata(userdata)
-        {
-        }
-
-        FuncOnNextTick func;
-        void* userdata;
-    };
-    std::vector<NextTickFuncData> next_tick_funcs_;
-    std::vector<NextTickFuncData> current_tick_funcs_;
+    // Keep track of updatables whose methods should be dispatched at a specified
+    // time.
+    std::vector<Updatable*> updatables_;
 };
 
 extern Engine engine;

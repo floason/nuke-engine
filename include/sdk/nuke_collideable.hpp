@@ -17,10 +17,11 @@ namespace nuke
 
 struct PhysicsContext
 {
-    Vector2 origin;
-    Vector2 mins;
-    Vector2 maxs;
-    float rotation;
+    Vector2 origin      = { 0.f, 0.f };
+    Vector2 velocity    = { 0.f, 0.f };
+    Vector2 mins        = { 0.f, 0.f };
+    Vector2 maxs        = { 0.f, 0.f };
+    float rotation      = 0.f;
 };
 
 class ICollideable

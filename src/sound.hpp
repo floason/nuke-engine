@@ -14,7 +14,7 @@
 namespace nuke
 {
 
-class Sound : public ISound
+class Sound : public ISound, public Updatable
 {
 public:
     // Load an existing sound file into memory.
@@ -95,6 +95,9 @@ private:
     // Create a new track after creating a MIX_Audio* instance.
     bool createTrack();
 
+    // Adjust audio attenuation per-tick if bound to a physics context.
+    void adjustAudioAttenuation();
+
 private:
     using unique_track = std::unique_ptr<MIX_Track, decltype(&MIX_DestroyTrack)>;
     unique_track track_;
@@ -107,14 +110,22 @@ private:
     int frequency_;
     bool loaded_            = true;
 
-    // This is used by the engine to amplify the volume of a sound instance,
-    // based on distance between a parent entity and the centre of the screen.
+    float volume_               = 1.f;
+    float playback_speed_       = 1.f;
+
+    // The attributes below are used to modify a sound instance's volume,
+    // panning and pitch given that the sound is parented to a collideable's
+    // physics context.
     friend void adjust_sound_attenuation(void* userdata);
-    float gain_             = 1.f;
-    float volume_           = 1.f;
-    float inv_log_max_      = 0.1f;     // Assumes an approximate max distance of 100,000 pixels.
-                                        // (Exact constant would be 1/log10(100,000 * 100,000 + 1).)
+    float gain_                 = 1.f;
+    float inv_log_max_          = 0.2f;     // Assumes an approximate max distance of 100,000 pixels.
+                                            // (Exact constant would be 1/log10(100,000 + 1).)
+    float pitch_multiplier_     = 1.f;
     PhysicsContext* parent_ = nullptr;
+
+    // Used for Doppler effect calculations. This is just a trial-and-error
+    // constant!
+    static constexpr float speed_of_sound = 135000.f;
 };
 
 }   // namespace nuke

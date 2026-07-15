@@ -10,6 +10,7 @@
 
 nuke::IEngine* engine;
 nuke::IRenderer* renderer;
+nuke::CameraContext* camera;
 
 static TestGame game_ = TestGame();
 TestGame* game = &game_;
@@ -19,6 +20,7 @@ TestEntityManager* entity_manager = &entity_manager_;
 
 static TestEntity* test4;
 static TestEntity* test5;
+static TestEntity* funny_entity = nullptr;
 static nuke::PixelBufferDescriptor descriptor(100, 100);
 
 static float test4_x_base = 320;
@@ -66,6 +68,7 @@ bool TestGame::Init()
     engine->PrecacheImage("C:/Windows/Web/Wallpaper/Windows/img0.jpg");
     engine->PrecacheImage("E:/test.png");
     engine->PrecacheSound("C:/Windows/Media/Alarm01.wav");
+    engine->PrecacheSound("heavy_scram2012_falling01.mp3");
 
     TestEntity* test = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
     test->render_context.render_size = { 50, 50 };
@@ -90,7 +93,7 @@ bool TestGame::Init()
     test4->render_context.scale = true;
     test4->collision.maxs = { 25, -25 };
     test4->collision.mins = { -25, 25 };
-    test4->collision.origin = { test4_x_base, test4_y_base };
+    test4->collision.origin = { test4_x_base - 100, test4_y_base + 100 };
     test4->AdjustRenderOrigin();
 
     test5 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
@@ -115,6 +118,7 @@ bool TestGame::Init()
 
     nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
     sound->Play(true);
+    sound->SetPlaybackSpeed(1.02);
     sound->SetParentEntity(test4);
     sound->SetMaxDistance(2000);
 
@@ -127,11 +131,10 @@ bool TestGame::Init()
 // Per-frame method which is invoked by the engine after starting.
 bool TestGame::PerFrame()
 {
-    if (commonvars.frametime > 10)
+    if (commonvars.realtime > 15)
     {
-        nuke::Vector2& camera = engine->GetCameraOrigin();
-        camera.x = std::sin((commonvars.frametime - 10) * 5) * 50;
-        camera.y = std::cos((commonvars.frametime - 10) * 5) * 50;
+        camera->camera_offset.x = std::sin((commonvars.realtime - 10) * 5) * 50;
+        camera->camera_offset.y = std::cos((commonvars.realtime - 10) * 5) * 50;
     }
 
     return true;
@@ -140,9 +143,33 @@ bool TestGame::PerFrame()
 // Per-tick method which is invoked by the engine after starting.
 bool TestGame::PerTick(bool last_per_frame)
 {
-    test4->collision.origin = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
-                                                   test4_y_base + std::cos(commonvars.ticks / 10.f) * 50 };
-    test4->AdjustRenderOrigin();
+    if (commonvars.curtime > 5)
+    {
+        test4->collision.origin = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
+                                    test4_y_base + std::cos(commonvars.ticks / 10.f) * 50 };
+        test4->AdjustRenderOrigin();
+    }
+
+    if (funny_entity == nullptr && commonvars.curtime >= 8)
+    {
+        funny_entity = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+        funny_entity->render_context.render_size = { 100, 100 };
+        funny_entity->collision.origin = { -3000, -350 };
+        funny_entity->collision.velocity = { 4000, 0 };
+        funny_entity->collision.maxs = { 50, -50 };
+        funny_entity->collision.mins = { -50, 50 };
+
+        nuke::ISound* sound = engine->LoadSound("heavy_scram2012_falling01.mp3");
+        sound->Play(true);
+        sound->SetVolume(4.f);
+        sound->SetParentEntity(funny_entity);
+        sound->SetMaxDistance(3000);
+    }
+    if (funny_entity != nullptr)
+    {
+        funny_entity->collision.origin.x += funny_entity->collision.velocity.x * commonvars.tick_interval;
+        funny_entity->AdjustRenderOrigin();
+    }
 
     static int frame = 0;
     static int direction = 1;

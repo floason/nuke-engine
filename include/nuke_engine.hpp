@@ -9,7 +9,7 @@
 #include <tuple>
 
 #include "nuke_macros.hpp"
-#include "nuke_math.hpp"
+#include "nuke_camera.hpp"
 
 namespace nuke
 {
@@ -18,9 +18,7 @@ class IRenderer;
 class IGame;
 class ITexture;
 class ISound;
-
-// On next tick function type. See IEngine::OnNextTick().
-using FuncOnNextTick = void (*)(void* userdata);
+class Updatable;
 
 class IEngine
 {
@@ -31,6 +29,9 @@ public:
 public:
     // Get the renderer interface.
     virtual IRenderer* GetRenderer() = 0;
+    
+    // Get the camera view.
+    virtual CameraContext* GetCameraView() = 0;
 
     // Print the engine version string.
     virtual void PrintVersion() = 0;
@@ -43,9 +44,6 @@ public:
 
     // Aggregate the game interface instance.
     virtual void SetGameInterface(IGame* game) = 0;
-
-    // Get a reference to the camera vector.
-    virtual Vector2& GetCameraOrigin() = 0;
 
     // Initialize the engine.
     virtual bool Init() = 0;
@@ -76,13 +74,13 @@ public:
     // sound instance did not load successfully.
     virtual ISound* CopySound(ISound* other, bool free_after_play = true) = 0;
 
+    // Dispatch an updatable's invokation at a later time period.
+    virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) = 0;
+
     // Start the engine and call into the game interface. This should be called only
     // after initialising the engine. This must be called from the main thread. This
     // method will block.
     virtual bool Start() = 0;
-
-    // Create a callback timer that fires on the next tick.
-    virtual void OnNextTick(FuncOnNextTick func, void* userdata = nullptr) = 0;
 
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.

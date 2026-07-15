@@ -20,22 +20,6 @@ SDLCALL void destroy_audio_on_finish(void* userdata, MIX_Track* track)
     delete static_cast<Sound*>(userdata);
 }
 
-// Callback function which is called per-tick for adjusting the sound's
-// attenuation.
-void adjust_sound_attenuation(void* userdata)
-{
-    // TODO left-right panning
-    // TODO relative to other entity rather than just centre of screen only?
-
-    Sound* sound = static_cast<Sound*>(userdata);
-    Vector2 origin_from_screen = sound->parent_->origin - engine.camera_origin - engine.screen_origin;
-    float dist = origin_from_screen.LengthSqr();
-    sound->gain_ = nuke::math::max(1.f - std::log10(dist + 1) * sound->inv_log_max_, 0.f);
-
-    MIX_SetTrackGain(sound->track_.get(), sound->volume_ * sound->gain_);
-    engine.OnNextTick(&adjust_sound_attenuation, sound);
-}
-
 // Load an existing sound file into memory.
 Sound::Sound(const char* path) :
     track_(nullptr, MIX_DestroyTrack)
@@ -175,9 +159,7 @@ void Sound::SetPlaybackPosition(float pos)
 // Get the playback speed of the sound (default: 1.0).
 float Sound::GetPlaybackSpeed()
 {
-    if (!loaded_)
-        return 0.f;
-    return MIX_GetTrackFrequencyRatio(track_.get());
+    return playback_speed_;
 }
 
 // Set the playback speed of the sound.
@@ -185,7 +167,8 @@ void Sound::SetPlaybackSpeed(float speed)
 {
     if (!loaded_)
         return;
-    MIX_SetTrackFrequencyRatio(track_.get(), speed);
+    playback_speed_ = speed;
+    MIX_SetTrackFrequencyRatio(track_.get(), speed * pitch_multiplier_);
 }
 
 // Play the sound.
@@ -246,10 +229,18 @@ void Sound::SetParentEntity(ICollideable* collideable)
     if (!loaded_)
         return;
 
-    // TODO: come back to this when entity deletion interface is
-    // implemented for implementing sound instance destruction
-    parent_ = &collideable->GetPhysicsContext();
-    engine.OnNextTick(&adjust_sound_attenuation, this);
+    if (collideable != nullptr)
+    {
+        parent_ = &collideable->GetPhysicsContext();
+        engine.DispatchUpdate(this);
+    }
+    else
+    {
+        MIX_StereoGains gains = { 1.f, 1.f };
+        MIX_SetTrackStereo(track_.get(), &gains);
+        MIX_SetTrackGain(track_.get(), volume_);
+        parent_ = nullptr;
+    }
 }
 
 // Set the max falloff distance for the audio, given it has a parent
@@ -258,7 +249,7 @@ bool Sound::SetMaxDistance(float dist)
 {
     if (!loaded_ || parent_ == nullptr)
         return false;
-    inv_log_max_ = 1.f / std::log10(dist * dist + 1);
+    inv_log_max_ = 1.f / std::log10(dist + 1);
     return true;
 }
 
@@ -279,9 +270,47 @@ bool Sound::createTrack()
     if (track == nullptr)
         return false;
 
+    SET_UPDATE(Sound, adjustAudioAttenuation);
     MIX_SetTrackAudio(track, audio_);
     track_.reset(track);
     return true;
+}
+
+// Adjust audio attenuation per-tick if bound to a physics context,
+// alongside audio panning and playback speed (doppler effect).
+void Sound::adjustAudioAttenuation()
+{
+    // TODO: come back to this when entity deletion interface is
+    // implemented for implementing sound instance destruction
+    // (maybe give delay for entity deletion sequence + validate future
+    // handle?)
+    
+    if (parent_ == nullptr)
+        return;
+
+    // Calculate the gain multiplier of the audio. Attenuation is calculated
+    // logarithmically so as to attempt to mimic realistic audio falloff.
+    Vector2 origin_from_screen = parent_->origin
+                               - engine.camera_context.camera_offset 
+                               - engine.camera_context.attenuation_offset;
+    Vector2 normalized = origin_from_screen.Normalize();
+    float dist = origin_from_screen.Length();
+    gain_ = nuke::math::max(1.f - std::log10(dist + 1.f) * inv_log_max_, 0.f);
+    MIX_SetTrackGain(track_.get(), volume_ * gain_);
+
+    // Pan the audio between stereo speakers using the normalised vector.
+    float angle = (normalized.x + 1.f) * nuke::math::pi::f * 0.25f;
+    MIX_StereoGains gains = { std::cosf(angle), std::sinf(angle) };
+    MIX_SetTrackStereo(track_.get(), &gains);
+
+    // Calculate the playback speed multiplier of the audio based on its
+    // relative offset and speed to the listener.
+    Vector2 relative_velocity = parent_->velocity - engine.camera_context.doppler_velocity;
+    float radial_multiplier = nuke::math::max(relative_velocity.Dot(normalized), -speed_of_sound + 1);
+    pitch_multiplier_ = speed_of_sound / (speed_of_sound + radial_multiplier);
+    MIX_SetTrackFrequencyRatio(track_.get(), playback_speed_ * pitch_multiplier_);
+
+    engine.DispatchUpdate(this);
 }
 
 }   // namespace nuke
