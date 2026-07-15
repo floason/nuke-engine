@@ -17,10 +17,10 @@ REGISTER_TEXTURE("texture_stream", PixelBufferDescriptor*, TextureStream);
 TextureStream::TextureStream(PixelBufferDescriptor* descriptor) :
     descriptor_(descriptor)
 {
-    type_ = TextureType::STREAM;
+    type_ = TextureType::TextureStream;
 
     SDL_Texture* texture = SDL_CreateTexture(
-        engine.renderer,
+        engine.renderer.sdl_renderer,
         SDL_PIXELFORMAT_RGBA32,
         SDL_TEXTUREACCESS_STREAMING,
         descriptor->GetWidth(),
@@ -28,7 +28,7 @@ TextureStream::TextureStream(PixelBufferDescriptor* descriptor) :
     );
     if (texture == nullptr)
     {
-        texture = engine.GetMissingTexture();
+        texture = engine.renderer.GetMissingTexture();
         loaded_ = false;
     }
 
@@ -41,6 +41,16 @@ TextureStream::~TextureStream()
 {
     delete descriptor_->buffer;
     descriptor_->buffer = nullptr;
+}
+
+// Draw this texture.
+// - origin - the top-left origin of the texture on the window
+// - size - the output size of the texture on the window
+// - crop_offset - top-left point within the texture to start drawing from
+// - scale - determines whether the texture should scale to fill the size vector
+void TextureStream::Draw(Vector2 origin, RenderContext& context)
+{
+    static_cast<TextureSDL*>(this)->Draw(origin, context);
 }
 
 }   // namespace nuke

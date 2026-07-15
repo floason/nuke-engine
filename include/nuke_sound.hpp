@@ -8,7 +8,7 @@
 namespace nuke
 {
 
-class IEntity;
+class ICollideable;
 
 class ISound
 {
@@ -62,7 +62,7 @@ public:
     // given entity, rather than it be a global sound. Because the entity
     // assumes ownership of this sound instance, this sound will be
     // destroyed upon entity deletion.
-    virtual void SetParentEntity(IEntity* entity) = 0;
+    virtual void SetParentEntity(ICollideable* collideable) = 0;
 
     // Set the max falloff distance for the audio, given it has a parent
     // entity. Returns false if a parent entity is not set.

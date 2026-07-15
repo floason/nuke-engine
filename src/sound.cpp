@@ -24,8 +24,11 @@ SDLCALL void destroy_audio_on_finish(void* userdata, MIX_Track* track)
 // attenuation.
 void adjust_sound_attenuation(void* userdata)
 {
+    // TODO left-right panning
+    // TODO relative to other entity rather than just centre of screen only?
+
     Sound* sound = static_cast<Sound*>(userdata);
-    Vector2 origin_from_screen = *sound->parent_origin_ - engine.camera_origin - engine.screen_origin;
+    Vector2 origin_from_screen = sound->parent_->origin - engine.camera_origin - engine.screen_origin;
     float dist = origin_from_screen.LengthSqr();
     sound->gain_ = nuke::math::max(1.f - std::log10(dist + 1) * sound->inv_log_max_, 0.f);
 
@@ -238,17 +241,14 @@ void Sound::DestroyOnFinish()
 // given entity, rather than it be a global sound. Because the entity
 // assumes ownership of this sound instance, this sound will be
 // destroyed upon entity deletion.
-void Sound::SetParentEntity(IEntity* entity)
+void Sound::SetParentEntity(ICollideable* collideable)
 {
     if (!loaded_)
         return;
 
     // TODO: come back to this when entity deletion interface is
     // implemented for implementing sound instance destruction
-    IPhysicsDescriptor* descriptor = entity->GetPhysicsDescriptor();
-    if (descriptor != nullptr)
-        parent_origin_ = &descriptor->GetOrigin();
-    parent_ = entity;
+    parent_ = &collideable->GetPhysicsContext();
     engine.OnNextTick(&adjust_sound_attenuation, this);
 }
 

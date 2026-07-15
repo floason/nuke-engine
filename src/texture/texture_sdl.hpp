@@ -19,20 +19,19 @@ class TextureSDL : public TextureBase
 public:
     TextureSDL();
 
+// ITexture
 public:
     // Get the size of the texture as a vector.
     virtual Vector2 GetSize() override;
 
+public:
     // Draw this texture.
     // - origin - the top-left origin of the texture on the window
     // - size - the output size of the texture on the window
     // - crop_offset - top-left point within the texture to start drawing from
     // - scale - determines whether the texture should scale to fill the size vector
-    virtual void Draw(Vector2 origin, 
-                      Vector2 size = { 0, 0 }, 
-                      ITextureDescriptor* descriptor = nullptr) override;
+    void Draw(Vector2 origin, RenderContext& context);
 
-public:
     // Retrieve the SDL texture instance as a raw pointer.
     SDL_Texture* Get();
 

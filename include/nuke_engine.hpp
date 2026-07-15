@@ -14,10 +14,10 @@
 namespace nuke
 {
 
+class IRenderer;
 class IGame;
 class ITexture;
 class ISound;
-class IEntityManager;
 
 // On next tick function type. See IEngine::OnNextTick().
 using FuncOnNextTick = void (*)(void* userdata);
@@ -29,8 +29,8 @@ public:
     NUKE_API static IEngine* GetEngineAPI(int major, int minor, int patch);
 
 public:
-    // Set the entity manager interface.
-    virtual void SetEntityManager(IEntityManager* manager) = 0;
+    // Get the renderer interface.
+    virtual IRenderer* GetRenderer() = 0;
 
     // Print the engine version string.
     virtual void PrintVersion() = 0;
@@ -91,7 +91,7 @@ public:
 private:
     // Create a raw texture instance with an optional parameter. This is only used
     // internally.
-    virtual ITexture* createRawTexture(const char* texture_name, std::any optional = std::any()) = 0;
+    virtual ITexture* createRawTexture(const char* texture_name, void* optional = nullptr) = 0;
 
 public:
     // Create a raw texture instance with an optional parameters. Ideally, this should
@@ -100,7 +100,7 @@ public:
     template <typename T>
     inline ITexture* CreateRawTexture(const char* texture_name, T arg)
     {
-        return createRawTexture(texture_name, arg);
+        return createRawTexture(texture_name, &arg);
     }
 
     // Create a raw texture instance with the desired parameters. Ideally, this should
@@ -109,7 +109,8 @@ public:
     template <typename... Args>
     inline ITexture* CreateRawTexture(const char* texture_name, Args&&... args)
     {
-        return createRawTexture(texture_name, std::make_tuple(std::forward<Args>(args)...));
+        auto container = std::make_tuple(std::forward<Args>(args)...);
+        return createRawTexture(texture_name, &container);
     }
 };
 

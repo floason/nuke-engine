@@ -26,6 +26,8 @@ int main()
     if (engine == nullptr)
         return EXIT_FAILURE;
 
+    renderer = engine->GetRenderer();
+
     engine->SetGameInterface(game);
     engine->PrintVersion();
     if (!engine->Init())

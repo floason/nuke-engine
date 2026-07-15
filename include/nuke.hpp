@@ -14,9 +14,9 @@
 #include "nuke_texture.hpp"
 #include "nuke_sound.hpp"
 #include "nuke_engine.hpp"
+#include "nuke_renderer.hpp"
 
 #include "sdk/nuke_gameinterface.hpp"
-#include "sdk/nuke_physicsdescriptor.hpp"
-#include "sdk/nuke_texturedescriptor.hpp"
+#include "sdk/nuke_renderable.hpp"
+#include "sdk/nuke_collideable.hpp"
 #include "sdk/nuke_entity.hpp"
-#include "sdk/nuke_entitymanager.hpp"

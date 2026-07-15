@@ -8,123 +8,6 @@
 #include "game_interface.hpp"
 #include "testentity.hpp"
 
-// Set the entity of this descriptor and set default properties.
-PhysicsDescriptor::PhysicsDescriptor(nuke::IEntity* entity) :
-    entity_(entity)
-{
-}
-
-// Get the described entity.
-nuke::IEntity* PhysicsDescriptor::GetEntity()
-{
-    return entity_;
-}
-
-// Get a reference to the the entity's world origin.
-nuke::Vector2& PhysicsDescriptor::GetOrigin() 
-{
-    return origin_;
-}
-
-// Get a reference to the entity's minimum bounding box vector.
-nuke::Vector2& PhysicsDescriptor::GetMins()
-{
-    return mins_;
-}
-
-// Get a reference to the entity's maximum bounding box vector.
-nuke::Vector2& PhysicsDescriptor::GetMaxs()
-{
-    return maxs_;
-}
-
-// Get a reference to the entity's rotation attribute.
-float& PhysicsDescriptor::GetRotation()
-{
-    return rotation_;
-}
-
-// Set the entity of this descriptor and set default properties.
-TextureDescriptor::TextureDescriptor(nuke::IEntity* entity) :
-    entity_(entity)
-{
-}
-
-// Manage texture instance upon destruction.
-TextureDescriptor::~TextureDescriptor()
-{
-    if (owns_texture_)
-        delete texture_;
-}
-
-// Get the described entity.
-nuke::IEntity* TextureDescriptor::GetEntity()
-{
-    return entity_;
-}
-
-// Get the entity's texture.
-nuke::ITexture* TextureDescriptor::GetTexture()
-{
-    return texture_;
-}
-
-// Set the entity's texture.
-void TextureDescriptor::SetTexture(nuke::ITexture* texture, bool set_bounds)
-{
-    // The old texture must be deleted if the entity owns it.
-    if (texture_ != nullptr && owns_texture_)
-        delete texture_;
-
-    texture_ = texture;
-    owns_texture_ = false;
-
-    // If set_bounds is true, the entity's size should be reset to the texture's
-    // size, with the centre of mass set to the centre of the texture.
-    if (set_bounds)
-    {
-        nuke::IPhysicsDescriptor* physics = entity_->GetPhysicsDescriptor();
-        if (physics != nullptr)
-        {
-            nuke::Vector2 maxs = texture->GetSize() / 2.f;
-            maxs.y = -maxs.y;
-            physics->GetMaxs() = maxs;
-            physics->GetMins() = -maxs;
-        }
-    }
-}
-
-// Get a reference to the render size vector of the texture.
-nuke::Vector2& TextureDescriptor::GetRenderSize()
-{
-    return render_size_;
-}
-
-// Get a reference to the crop offset vector when drawing the texture.
-nuke::Vector2& TextureDescriptor::GetCropOffset()
-{
-    return crop_offset_;
-}
-
-// Get a reference to the color struct of this texture.
-nuke::Color& TextureDescriptor::GetColor()
-{
-    return color_;
-}
-
-// Get a reference to the scale property for deciding whether to scale
-// the drawn texture to fit its render size.
-bool& TextureDescriptor::GetScale()
-{
-    return scale_;
-}
-
-// Set ownership of the loaded texture to this entity, if applicable.
-void TextureDescriptor::OwnTexture()
-{
-    owns_texture_ = true;
-}
-
 // Create a new entity by classname.
 nuke::IEntity* TestEntityManager::CreateEntity(const char* name)
 {
@@ -133,10 +16,8 @@ nuke::IEntity* TestEntityManager::CreateEntity(const char* name)
     if (std::strcmp(name, "test_entity") == 0)
     {
         entity = new TestEntity();
-
-        nuke::ITextureDescriptor* texture = entity->GetTextureDescriptor();
-        texture->SetTexture(engine->CreateRawTexture("texture_rect"));
-        texture->OwnTexture();
+        entity->SetTexture(engine->CreateRawTexture("texture_rect"));
+        entity->OwnTexture();
         
         entities_.emplace_front(entity);
         entity->it_ = entities_.begin();
@@ -156,20 +37,69 @@ nuke::IEntity* TestEntityManager::GetEntity(nuke::IEntity* first)
 }
 
 // Set entity default properties.
-TestEntity::TestEntity() :
-    physics_(this),
-    texture_(this)
+TestEntity::TestEntity()
 {
+    AddToRenderList(render_context);
 }
 
-// Get the entity's physics descriptor.
-nuke::IPhysicsDescriptor* TestEntity::GetPhysicsDescriptor()
+// Remove this entity from the renderer's list.
+TestEntity::~TestEntity()
 {
-    return &physics_;
+    RemoveFromRenderList();
 }
 
-// Get the entity's texture descriptor.
-nuke::ITextureDescriptor* TestEntity::GetTextureDescriptor()
+// Propagate this renderable to the renderer.
+void TestEntity::AddToRenderList(nuke::RenderContext& context)
 {
-    return &texture_;
+    renderer->AddRenderable(this, context);
+}
+
+// Tell the renderer to stop tracking this renderer.
+void TestEntity::RemoveFromRenderList()
+{
+    renderer->RemoveRenderable(render_handle_);
+}
+
+// Set ownership of the loaded texture to this renderable, if applicable.
+void TestEntity::OwnTexture()
+{
+    owns_texture_ = true;
+}
+
+// Get a reference to the renderable's handle.
+nuke::RenderHandle& TestEntity::GetRenderHandle()
+{
+    return render_handle_;
+}
+
+// Get a reference to the collideable's physics context struct.
+nuke::PhysicsContext& TestEntity::GetPhysicsContext()
+{
+    return collision;
+}
+
+// Set the entity's texture.
+void TestEntity::SetTexture(nuke::ITexture* texture, bool set_bounds)
+{
+    // The old texture must be deleted if the entity owns it.
+    if (render_context.texture != nullptr && owns_texture_)
+        delete render_context.texture;
+
+    render_context.texture = texture;
+    owns_texture_ = false;
+
+    // If set_bounds is true, the entity's size should be reset to the texture's
+    // size, with the centre of mass set to the centre of the texture.
+    if (set_bounds)
+    {
+        collision.maxs = texture->GetSize() / 2.f;
+        collision.maxs.y = -collision.maxs.y;
+        collision.mins = -collision.maxs;
+    }
+}
+
+// Adjust the centre origin of render context.
+void TestEntity::AdjustRenderOrigin()
+{
+    render_context.origin = collision.origin - (collision.maxs - collision.mins) / 2.f;
 }

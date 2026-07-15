@@ -13,15 +13,19 @@ namespace nuke
 
 enum class TextureType
 {
-    BASE,   // This texture is not usable!
+    TextureBase,   // This texture is not usable!
+    TextureTest,
 
-    RECT,
-    IMAGE,
-    STREAM
+    TextureRect,
+    TextureImage,
+    TextureStream
 };
 
+// Base texture class. This can not be drawn and all texture classes must
+// inherit from this class.
 class TextureBase : public ITexture
 {
+// ITexture
 public:
     // Has the texture loaded successfully?
     virtual const bool Loaded() const override;
@@ -34,16 +38,6 @@ public:
     virtual Vector2 GetSize() override;
 
 public:
-    // Draw this texture.
-    // - origin - the top-left origin of the texture on the window
-    // - size - the output size of the texture on the window
-    // - crop_offset - top-left point within the texture to start drawing from
-    // - scale - determines whether the texture should scale to fill the size vector
-    virtual void Draw(Vector2 origin, 
-                      Vector2 size = { 0, 0 }, 
-                      ITextureDescriptor* descriptor = nullptr) = 0;
-
-public:
     // Get the texture type.
     inline TextureType GetType()
     {
@@ -51,7 +45,7 @@ public:
     }
 
 protected:
-    TextureType type_ = TextureType::BASE;
+    TextureType type_ = TextureType::TextureBase;
     bool loaded_ = true;
 };
 

@@ -5,11 +5,13 @@
 
 #pragma once
 
+#include <vector>
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
+#include "renderer.hpp"
 
 namespace nuke
 {
@@ -17,7 +19,11 @@ namespace nuke
 // Engine class which incorporates the IEngine interface.
 class Engine : public IEngine
 {
+// IEngine
 public:
+    // Get the renderer interface.
+    virtual IRenderer* GetRenderer() override;
+
     // Print the engine version string.
     virtual void PrintVersion() override;
     
@@ -26,9 +32,6 @@ public:
 
     // Clear the last engine error;
     virtual void ClearLastError() override;
-
-    // Set the entity manager interface.
-    virtual void SetEntityManager(IEntityManager* manager) override;
 
     // Aggregate the game interface instance.
     virtual void SetGameInterface(IGame* game) override;
@@ -77,29 +80,26 @@ public:
     // on engine init failure.
     virtual bool Shutdown() override;
 
+// IEngine
 private:
     // Create a raw texture instance with an optional parameter. This is only used
     // internally.
-    virtual ITexture* createRawTexture(const char* texture_name, std::any optional = std::any()) override;
+    virtual ITexture* createRawTexture(const char* texture_name, void* optional = nullptr) override;
 
 public:
     // Set the engine error buffer.
     void SetErrorBuffer(const char* error);
 
-    // Get the "missing texture" texture.
-    SDL_Texture* GetMissingTexture();
-
 public:
-    SDL_Renderer* renderer                                          = nullptr;
-    SDL_Window* window                                              = nullptr;
+    Renderer renderer;
+    
     MIX_Mixer* mixer                                                = nullptr;
-    IEntityManager* entity_manager                                  = nullptr;
     IGame* game                                                     = nullptr;
     Vector2 screen_origin                                           = { 0.f, 0.f };
     Vector2 camera_origin                                           = { 0.f, 0.f };
     
 private:
-    SDL_Texture* missing_texture_                                   = nullptr;
+    
     std::unordered_map<std::string, ITexture*> precached_images_;
     std::unordered_map<std::string, ISound*> precached_sounds_;
     char error_[256];

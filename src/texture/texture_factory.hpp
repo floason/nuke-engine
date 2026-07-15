@@ -8,17 +8,23 @@
  * Engine::PrecacheTexture().
  * - REGISTER_TEXTURE(NAME, CLASS): register a new factory instance for the texture class.
  *   It will accept zero parameters.
- *   . E.g: REGISTER_TEXTURE("texture_rect", TextureRect).
+ *   . E.g: REGISTER_TEXTURE("texture_rect", TextureRect);
  * - REGISTER_TEXTURE(NAME, PARAM, CLASS): register a new factory instance for the texture
  *   class. Instantiating an instance of this texture class requires one parameter, with
  *   its type specified by the PARAM macro.
- *   . E.g: REGISTER_TEXTURE("texture_image", const char*, TextureImage).
+ *   . E.g: REGISTER_TEXTURE("texture_image", const char*, TextureImage);
+ * - REGISTER_TEXTURE(NAME, std::tuple<T1, T2, T...>, CLASS): register a new factory
+ *   for the texture class, which takes in a variadic length of parameters determined by
+ *   the provided tuple. Each parameter can be provided separately when invoking
+ *   IEngine::CreateRawTexture().
+ *   . E.g: REGISTER_TEXTURE("texture_test", std::tuple<int, const char*>, TextureTest);
+ *          engine->CreateRawTexture("texture_test", 3, "hello world");
 */
 
 // This might just be the worst C++ code I've ever written.
 
-// TODO in the future: replace textures module with single texture class that loads from
-// nuke texture file format?
+// TODO in the future: replace IEngine::CreateRawTexture() public interface with single
+// engine model file format that is precached?
 
 #pragma once
 
@@ -31,20 +37,22 @@
 #include "nuke.hpp"
 
 #define _REGISTER_TEXTURE_2(NAME, CLASS)                                                            \
-    static TextureFactory<CLASS> factory_##CLASS(NAME);
+    static TextureFactory<CLASS> factory_##CLASS(NAME);                                             
 #define _REGISTER_TEXTURE_3(NAME, PARAM, CLASS)                                                     \
-    static TextureFactory<CLASS, PARAM> factory_##CLASS(NAME);
+    static TextureFactory<CLASS, PARAM> factory_##CLASS(NAME);                                      
 #define _REGISTER_TEXTURE_SELECT(_1, _2, _3, _4, ...) _4
 
 #define REGISTER_TEXTURE(NAME, ...)                                                                 \
     _REGISTER_TEXTURE_SELECT(NAME, __VA_ARGS__, _REGISTER_TEXTURE_3, _REGISTER_TEXTURE_2)           \
-        (NAME, __VA_ARGS__)
+        (NAME, __VA_ARGS__)                                                                         \
 
 namespace nuke
 {
 
 class TextureBase;
 
+// This is the base class for all texture factory instances, required to manage
+// the dictionary for each texture factory.
 class TextureFactoryBase
 {
 private:
@@ -64,22 +72,23 @@ public:
 
 public:
     // Texture instances are instantiated though this static method, which accepts
-    // a name parameter for deciding which texture factory to invoke, alongside
-    // optional parameters, although only one optional parameter is currently
-    // supported.
+    // a name parameter for deciding which texture factory to invoke. Optional
+    // parameters are propagated in the final TextureFactory instance for each 
+    // class.
     template <typename... Args>
-    static ITexture* Create(const char* name, Args&&... args)
+    static ITexture* Create(const char* name, void* args)
     {
         auto factory = factories().find(name);
         if (factory == factories().end())
             return nullptr;
-        return (*factory->second)(std::forward<Args>(args)...);
+        return (*factory->second)(args);
     }
 
 protected:
-    virtual ITexture* operator()(std::any value = std::any()) = 0;
+    virtual ITexture* operator()(void* value = nullptr) = 0;
 };
 
+// Each texture factory instance is derived from this class.
 template <typename T, typename Parameter = void>
 class TextureFactory : public TextureFactoryBase
 {
@@ -107,7 +116,7 @@ public:
     }
 
 protected:
-    virtual ITexture* operator()(std::any value) override
+    virtual ITexture* operator()(void* value) override
     {
         // Whether the texture being instantiated requires an additional parameter
         // is evaluated at compile-time, thus the designated texture class does not 
@@ -122,12 +131,12 @@ protected:
             {
                 return new T(std::forward<decltype(args)>(args)...);
             };
-            return std::apply(call_ctor, std::any_cast<Parameter>(value));
+            return std::apply(call_ctor, *static_cast<Parameter*>(value));
         }
 
         // If a single parameter was provided, cast it and pass it standalone.
         else
-            return new T(std::any_cast<Parameter>(value));
+            return new T(*static_cast<Parameter*>(value));
     }
 };
 

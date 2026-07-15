@@ -11,11 +11,11 @@
 namespace nuke
 {
 
-class Engine;
+class Renderer;
 
 class TextureStream : public TextureSDL
 {   
-    friend Engine;
+    friend Renderer;
 
 public:
     // Create a new streamed texture using a pixel buffer struct.
@@ -23,6 +23,14 @@ public:
 
     // Destroy the descriptor's pixel buffer instance on de-allocation.
     virtual ~TextureStream();
+
+public:
+    // Draw this texture.
+    // - origin - the top-left origin of the texture on the window
+    // - size - the output size of the texture on the window
+    // - crop_offset - top-left point within the texture to start drawing from
+    // - scale - determines whether the texture should scale to fill the size vector
+    void Draw(Vector2 origin, RenderContext& context);
 
 private:
     PixelBufferDescriptor* descriptor_;

@@ -33,6 +33,7 @@ public:
     // Destroy the sound instance's MIX_Audio* instance, if owned.
     virtual ~Sound() override;
 
+// ISound
 public:
     // Has the sound instance loaded successfully?
     virtual const bool Loaded() const override;
@@ -80,7 +81,7 @@ public:
     // given entity, rather than it be a global sound. Because the entity
     // assumes ownership of this sound instance, this sound will be
     // destroyed upon entity deletion.
-    virtual void SetParentEntity(IEntity* entity) override;
+    virtual void SetParentEntity(ICollideable* collideable) override;
 
     // Set the max falloff distance for the audio, given it has a parent
     // entity. Returns false if a parent entity is not set.
@@ -111,9 +112,9 @@ private:
     friend void adjust_sound_attenuation(void* userdata);
     float gain_             = 1.f;
     float volume_           = 1.f;
-    float inv_log_max_      = 0.1f;     // Assumes a max distance of 100,000 pixels.
-    IEntity* parent_        = nullptr;
-    Vector2* parent_origin_ = nullptr;
+    float inv_log_max_      = 0.1f;     // Assumes an approximate max distance of 100,000 pixels.
+                                        // (Exact constant would be 1/log10(100,000 * 100,000 + 1).)
+    PhysicsContext* parent_ = nullptr;
 };
 
 }   // namespace nuke

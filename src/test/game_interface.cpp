@@ -9,6 +9,7 @@
 #include "testentity.hpp"
 
 nuke::IEngine* engine;
+nuke::IRenderer* renderer;
 
 static TestGame game_ = TestGame();
 TestGame* game = &game_;
@@ -56,7 +57,6 @@ float TestGame::GetFpsMax()
 // Called when the game interface has been attached to the engine.
 void TestGame::OnEngineAttach()
 {
-    engine->SetEntityManager(entity_manager);
 }
 
 // Called on engine initialization, if the game engine already aggregates the
@@ -68,49 +68,58 @@ bool TestGame::Init()
     engine->PrecacheSound("C:/Windows/Media/Alarm01.wav");
 
     TestEntity* test = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
-    test->GetPhysicsDescriptor()->GetOrigin() = { 100, -50 };
+    test->render_context.render_size = { 50, 50 };
+    test->collision.origin = { 100, -50 };
+    test->AdjustRenderOrigin();
 
     TestEntity* test2 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test2->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
-    test2->GetTextureDescriptor()->GetColor() = { 255, 0, 0, 127 };
-    test2->GetPhysicsDescriptor()->GetOrigin() = { 150, -100 };
+    test2->render_context.render_size = { 50, 50 };
+    test2->render_context.color = { 0, 255, 0, 127 };
+    test2->collision.origin = { 175, -125 };
+    test2->AdjustRenderOrigin();
 
     TestEntity* test3 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test3->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
-    test3->GetTextureDescriptor()->GetColor() = { 0, 255, 0, 127 };
-    test3->GetPhysicsDescriptor()->GetOrigin() = { 175, -125 };
+    test3->render_context.render_size = { 50, 50 };
+    test3->render_context.color = { 255, 0, 0, 127 };
+    test3->collision.origin = { 150, -100 };
+    test3->AdjustRenderOrigin();
 
     test4 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test4->GetTextureDescriptor()->SetTexture(
-        engine->LoadImage("C:/Windows/Web/Wallpaper/Windows/img0.jpg"));
-    test4->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
-    test4->GetPhysicsDescriptor()->GetMaxs() = { 25, -25 };
-    test4->GetPhysicsDescriptor()->GetMins() = { -25, 25 };
-    test4->GetTextureDescriptor()->GetScale() = true;
-    test4->GetPhysicsDescriptor()->GetOrigin() = { test4_x_base, test4_y_base };
+    test4->SetTexture(engine->LoadImage("C:/Windows/Web/Wallpaper/Windows/img0.jpg"));
+    test4->render_context.render_size = { 50, 50 };
+    test4->render_context.scale = true;
+    test4->collision.maxs = { 25, -25 };
+    test4->collision.mins = { -25, 25 };
+    test4->collision.origin = { test4_x_base, test4_y_base };
+    test4->AdjustRenderOrigin();
 
     test5 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test5->GetTextureDescriptor()->SetTexture(
-        engine->LoadImage("E:/test.png"));
-    test5->GetTextureDescriptor()->GetRenderSize() = { 50, 50 };
-    test5->GetPhysicsDescriptor()->GetOrigin() = { 450, -250 };
+    test5->SetTexture(engine->LoadImage("E:/test.png"));
+    test5->render_context.render_size = { 50, 50 };
+    test5->collision.maxs = { 25, -25 };
+    test5->collision.mins = { -25, 25 };
+    test5->collision.origin = { 475, -275 };
+    test5->AdjustRenderOrigin();
 
     TestEntity* test6 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test6->GetTextureDescriptor()->SetTexture(
-        engine->CreateRawTexture("texture_stream", &descriptor));
-    test6->GetTextureDescriptor()->OwnTexture();
-    test6->GetTextureDescriptor()->GetRenderSize() = { 100, 100 };
-    test6->GetPhysicsDescriptor()->GetOrigin() = { 50, -330 };
+    test6->SetTexture(engine->CreateRawTexture("texture_stream", &descriptor));
+    test6->OwnTexture();
+    test6->render_context.render_size = { 100, 100 };
+    test6->collision.origin = { 100, -330 };
+    test6->AdjustRenderOrigin();
 
     TestEntity* cursor = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    cursor->GetTextureDescriptor()->GetRenderSize() = { 1, 1 };
-    cursor->GetPhysicsDescriptor()->GetOrigin() = { 320, -240 };
+    cursor->render_context.render_size = { 1, 1 };
+    cursor->collision.origin = { 320, -240 };
+    cursor->AdjustRenderOrigin();
 
     nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
     sound->Play(true);
     sound->SetParentEntity(test4);
     sound->SetMaxDistance(2000);
+
+    // test
+    delete engine->CreateRawTexture("texture_test", 3, "hi");
 
     return true;
 }
@@ -131,8 +140,9 @@ bool TestGame::PerFrame()
 // Per-tick method which is invoked by the engine after starting.
 bool TestGame::PerTick(bool last_per_frame)
 {
-    test4->GetPhysicsDescriptor()->GetOrigin() = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
+    test4->collision.origin = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
                                                    test4_y_base + std::cos(commonvars.ticks / 10.f) * 50 };
+    test4->AdjustRenderOrigin();
 
     static int frame = 0;
     static int direction = 1;
@@ -140,7 +150,7 @@ bool TestGame::PerTick(bool last_per_frame)
     {
         if ((frame += direction) % 4 == 0)
             direction = -direction;
-        test5->GetTextureDescriptor()->GetCropOffset() = nuke::Vector2(frame * 50, 0);
+        test5->render_context.crop_offset = nuke::Vector2(frame * 50, 0);
     }
 
     nuke::Color* pixel_buffer = descriptor.buffer->Lock();

@@ -43,9 +43,9 @@ public:
 
 public:
     nuke::CommonVars commonvars;
-    float fps = 0.f;
 };
 
 extern nuke::IEngine* engine;
+extern nuke::IRenderer* renderer;
 extern TestGame* game;
 extern TestEntityManager* entity_manager;

@@ -4,6 +4,7 @@
 // Nuke engine.
 
 #include <iostream>
+#include <cassert>
 #include <cstring>
 #include <cstdio>
 #include <cstdint>
@@ -13,8 +14,7 @@
 #include "nuke.hpp"
 #include "engine.hpp"
 #include "sound.hpp"
-#include "texture_base.hpp"
-#include "texture_stream.hpp"
+#include "texture.hpp"
 
 namespace nuke
 {
@@ -27,6 +27,12 @@ IEngine* IEngine::GetEngineAPI(int major, int minor, int patch)
     if (major != nuke::engine_major || minor != nuke::engine_minor || patch != nuke::engine_patch)
         return nullptr;
     return &engine;
+}
+
+// Get the renderer interface.
+IRenderer* Engine::GetRenderer()
+{
+    return &renderer;
 }
 
 // Print the engine version string.
@@ -64,12 +70,6 @@ void Engine::ClearLastError()
     std::memset(error_, 0, sizeof(error_));
 }
 
-// Set the entity manager interface.
-void Engine::SetEntityManager(IEntityManager* manager)
-{
-    this->entity_manager = manager;
-}
-
 // Aggregate the game interface instance.
 void Engine::SetGameInterface(IGame* game)
 {
@@ -86,8 +86,9 @@ bool Engine::Init()
             "engine!");
         return false;
     }
-    
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+
+    Vector2 size = engine.game->GetSize();
+    if (!renderer.Init(size))
         return false;
 
     if (!MIX_Init())
@@ -95,39 +96,6 @@ bool Engine::Init()
 
     if ((mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr)) == nullptr)
         return false;
-
-    // Before calling IGame::Init(), the SDL renderer must be set up. This
-    // requires a window to be spawned, so it is hidden until the main loop is
-    // started. Initiating the renderer is required for managing SDL-related
-    // assets, particularly textures.
-    Vector2 size = game->GetSize();
-    if (!SDL_CreateWindowAndRenderer(game->GetName(), 
-                                     size.x, 
-                                     size.y, 
-                                     SDL_WINDOW_HIDDEN, 
-                                     &window, 
-                                     &renderer))
-        return false;
-
-    // A 16x16 "missing texture" texture is generated in place of any textures
-    // that fail to load (for texture instances which inherit TextureSDL).
-    Color* pixels;
-    int pitch;
-    missing_texture_ = SDL_CreateTexture(renderer,
-                                         SDL_PIXELFORMAT_RGBA32,
-                                         SDL_TEXTUREACCESS_STREAMING,
-                                         16,
-                                         16);
-    if (missing_texture_ == nullptr)
-        return false;
-    SDL_LockTexture(missing_texture_, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
-    for (int y = 0; y < 16; y++)
-    {
-        Color* row = pixels->GetRow(pitch, y);
-        for (int x = 0; x < 16; x++)
-            row[x] = { static_cast<uint8_t>((x == y || (15 - x) == y) ? 255 : 0), 0, 0, 255 };
-    }
-    SDL_UnlockTexture(missing_texture_);
 
     screen_origin = { size.x / 2.f, -size.y / 2.f };
     if (!game->Init())
@@ -139,7 +107,7 @@ bool Engine::Init()
 // Precache an image texture.
 void Engine::PrecacheImage(const char* path)
 {
-    precached_images_[path] = createRawTexture("texture_image", path);
+    precached_images_[path] = CreateRawTexture("texture_image", path);
 }
 
 // Load a precached image texture. Returns NULL if not found.
@@ -206,13 +174,6 @@ bool Engine::Start()
         return false;
     }
 
-    if (entity_manager == nullptr)
-    {
-        SetErrorBuffer("Please call Engine::SetEntityManager() to link your entity manager instance "   \
-            "to the engine!");
-        return false;
-    }
-
     CommonVars& vars = game->GetCommonVars();
     vars.tick_interval = 1.f / game->GetTickRate();
     if (vars.tick_interval <= 0.f)
@@ -221,14 +182,7 @@ bool Engine::Start()
         return false;
     }
 
-    // The window and renderer is created during engine initialization, but the
-    // window is not made visible. Now that the engine is starting, it must 
-    // finally be made visible.
-    SDL_ShowWindow(window);
-
-    // TODO: split into separate render phases so that SDL_BLENDMODE_NONE is used
-    // in place for solid objects?
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    renderer.Start();
 
     // After successful initialisation, the main loop is invoked, which blocks
     // until the window is exited.
@@ -261,7 +215,7 @@ bool Engine::Start()
             unsigned count = math::min((int)(frametime / game_tick_interval), NUKE_MAX_TICKS_PER_FRAME);
             for (unsigned i = 0; i < count; i++)
             {
-                // Invoke the game interface's IGame::PerTick() method.
+                // Invoke the game interface's ::PerTick() method.
                 if (!game->PerTick(i + 1 == count))
                     break;
 
@@ -276,49 +230,12 @@ bool Engine::Start()
             last_tick_timestamp += game_tick_interval * count;
         }
 
-        // Clear the screen.
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        SDL_RenderClear(renderer);
-
-        // Interface with the game itself.
+        // Invoke the game interface's ::PerFrame() method.
         if (!game->PerFrame())
             break;
 
-        // Render each entity's texture in its designated origin.
-        IEntity* entity = nullptr;
-        while ((entity = entity_manager->GetEntity(entity)) != nullptr)
-        {
-            // TODO: z-indexes
-
-            ITextureDescriptor* texture_descriptor = entity->GetTextureDescriptor();
-            if (texture_descriptor == nullptr)
-                continue;
-
-            IPhysicsDescriptor* physics = entity->GetPhysicsDescriptor();
-            if (physics == nullptr)
-                continue;
-
-            TextureBase* texture = static_cast<TextureBase*>(texture_descriptor->GetTexture());
-            if (texture == nullptr)
-                continue;
-
-            // If the texture is a TextureStream instance and its pixel buffer
-            // has been recently updated, it should be copied to the GPU.
-            if (texture->GetType() == TextureType::STREAM)
-            {
-                TextureStream* stream = static_cast<TextureStream*>(texture);
-                if (stream->descriptor_ != nullptr && stream->descriptor_->buffer->Ready())
-                    SDL_UnlockTexture(stream->Get());
-            }
-
-            Vector2 centred = physics->GetOrigin() - (physics->GetMaxs() - physics->GetMins()) / 2.f;
-            texture->Draw(centred - camera_origin, 
-                          texture_descriptor->GetRenderSize(),
-                          texture_descriptor);
-        }
-
-        // Update the screen.
-        SDL_RenderPresent(renderer);
+        // Interface with the renderer.
+        renderer.DrawFrame();
 
         // Delay the thread until the next frame if requested.
         current_tick = SDL_GetTicksNS();
@@ -355,14 +272,9 @@ void Engine::OnNextTick(FuncOnNextTick func, void* userdata)
 // on engine init failure.
 bool Engine::Shutdown()
 {
-    if (missing_texture_ != nullptr)
-        SDL_DestroyTexture(missing_texture_);
-    if (window != nullptr)
-        SDL_DestroyWindow(window);
-    if (renderer != nullptr)
-        SDL_DestroyRenderer(renderer);
     if (mixer != nullptr)
         MIX_DestroyMixer(mixer);
+    renderer.Shutdown();
     MIX_Quit();
     SDL_Quit();
     return true;
@@ -371,7 +283,7 @@ bool Engine::Shutdown()
 // Create a raw texture instance with an optional parameter. Ideally, this should
 // be checked for NULL on failure before an entity takes ownership of the created 
 // texture, as the returned texture instance will otherwise not be managed!
-ITexture* Engine::createRawTexture(const char* texture_name, std::any optional)
+ITexture* Engine::createRawTexture(const char* texture_name, void* optional)
 {
     return TextureFactoryBase::Create(texture_name, optional);
 }
@@ -380,12 +292,6 @@ ITexture* Engine::createRawTexture(const char* texture_name, std::any optional)
 void Engine::SetErrorBuffer(const char* error)
 {
     std::strncpy(error_, error, sizeof(error_));
-}
-
-// Get the "missing texture" texture.
-SDL_Texture* Engine::GetMissingTexture()
-{
-    return missing_texture_;
 }
 
 }   // namespace nuke

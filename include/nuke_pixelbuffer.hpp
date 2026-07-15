@@ -1,9 +1,9 @@
 // floason (C) 2026
 // Licensed under the MIT License.
 
-// This header defines a pixel buffer interface which is populated by the engine,
-// alongside its parent pixel buffer descriptor class which is created by the
-// consumer
+// This header defines a pixel buffer abstract class which is populated by the 
+// engine,alongside its parent pixel buffer descriptor class which is created 
+// by the consumer
 
 #pragma once
 
@@ -24,16 +24,36 @@ public:
     // each pixel row, call nuke::Color::GetRow().
     virtual Color* Lock() = 0;
 
-    // Get the pitch of this buffer.
-    virtual int Pitch() = 0;
+public:
+    int Pitch()
+    {
+        return pitch_;
+    }
     
     // Signal to the engine that the pixel buffer should be copied into
     // video memory.
-    virtual void Unlock() = 0;
+    void Unlock()
+    {
+        update_ = true;
+    }
 
     // Is the pixel buffer ready to update? This should be called only by
     // engine code.
-    virtual bool Ready() = 0;
+    bool Ready()
+    {
+        if (!update_)
+            return false;
+
+        update_ = false;
+        buffer_ = nullptr;
+        pitch_ = 0;
+        return true;
+    }
+
+protected:
+    Color* buffer_  = nullptr;
+    int pitch_      = 0;
+    bool update_    = false;
 };
 
 class PixelBufferDescriptor

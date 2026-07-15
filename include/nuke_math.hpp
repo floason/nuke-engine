@@ -130,9 +130,9 @@ static inline int get_sign(T num)
 
 // Linear interpolation from A -> B given T weighting.
 template <typename T>
-static inline T lerp(T a, T b, T t)
+static inline T lerp(T a, T b, float t)
 {
-    t = min(max(t, static_cast<T>(0)), static_cast<T>(1));
+    t = min(max(t, 0.f), 1.f);
     if (a * b < 0)
         return a * (1 - t) + t * b;
     else
