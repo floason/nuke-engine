@@ -46,23 +46,6 @@ nuke::Vector2 TestGame::GetSize()
     return { 640, 480 };   
 }
 
-// Return the tickrate used for simulating physics.
-float TestGame::GetTickRate()
-{
-    return NUKE_DEFAULT_TICKRATE;
-}
-
-// Return the maximum framerate used for processing the game (0 for unlimited).
-float TestGame::GetFpsMax()
-{
-    return 0.f;
-}
-
-// Called when the game interface has been attached to the engine.
-void TestGame::OnEngineAttach()
-{
-}
-
 // Called on engine initialization, if the game engine already aggregates the
 // game interface.
 bool TestGame::Init()
@@ -228,7 +211,7 @@ bool TestGame::PerTick(bool last_per_frame)
     if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 5)
         text.SetFont("C:/Windows/Fonts/sserife.fon");
     else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 8)
-        text.SetFont("C:/Windows/Fonts/arial.ttf");
+        text.SetFont("");
     else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 10)
         text.SetFontSize(25.f);
     else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 12)

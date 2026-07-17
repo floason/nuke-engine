@@ -63,9 +63,9 @@ public:
     };
 
 public:
-    // Set the font used. This can be deferred, however any additional
-    // text attributes cannot be set until a font has been successfully
-    // loaded.
+    // Set the font used. Any additional text attributes cannot be set 
+    // until a font has been successfully loaded. If the font is left
+    // blank, the engine will load a default font instead.
     TextDescriptor(std::string font = "", float font_size = 12.f) :
         font_name_(font),
         font_size_(font_size)

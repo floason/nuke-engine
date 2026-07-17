@@ -12,6 +12,7 @@
 #include "engine.hpp"
 #include "renderer.hpp"
 #include "texture.hpp"
+#include "vt323.hpp"
 
 namespace nuke
 {
@@ -80,6 +81,9 @@ bool Renderer::Init(Vector2& game_size)
         return false;
     
     if ((sdl_text_engine = TTF_CreateRendererTextEngine(sdl_renderer)) == nullptr)
+        return false;
+
+    if ((default_font_io_stream = SDL_IOFromConstMem(vt323_ttf, vt323_ttf_len)) == nullptr)
         return false;
 
     return true;

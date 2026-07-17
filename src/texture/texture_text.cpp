@@ -74,6 +74,7 @@ void TextureText::Draw(Vector2 origin, RenderContext& context)
 // Initialize the font.
 void TextureText::initialize()
 {
+    TTF_Font* font = nullptr;
     TTF_Text* text = nullptr;
     std::string buffer = descriptor_->GetBuffer();
     if (descriptor_ == nullptr)
@@ -82,7 +83,18 @@ void TextureText::initialize()
     if (descriptor_->interface_ == nullptr)
         descriptor_->interface_ = new TextInterface(this);
 
-    TTF_Font* font = TTF_OpenFont(descriptor_->GetFont().c_str(), descriptor_->GetFontSize());
+    std::string font_name = descriptor_->GetFont();
+    if (font_name.length() > 0)
+        font = TTF_OpenFont(font_name.c_str(), descriptor_->GetFontSize());
+    else
+    {
+        // If a font name is not set, use the engine's default font.
+        SDL_SeekIO(engine.renderer.default_font_io_stream, 0, SDL_IO_SEEK_SET);
+        font = TTF_OpenFontIO(engine.renderer.default_font_io_stream, 
+                              false,
+                              descriptor_->GetFontSize());
+    }
+    
     bool update_text = true;
     if (font != nullptr)
     {

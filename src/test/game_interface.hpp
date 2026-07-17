@@ -19,15 +19,6 @@ public:
     // Get the size of the game window.
     virtual nuke::Vector2 GetSize() override;
 
-    // Return the tickrate used for simulating physics and logic.
-    virtual float GetTickRate() override;
-
-    // Return the maximum framerate used for processing the game (0 for unlimited).
-    virtual float GetFpsMax() override;
-
-    // Called when the game interface has been attached to the engine.
-    virtual void OnEngineAttach() override;
-
     // Called on engine initialization, if the game engine already aggregates the
     // game interface.
     virtual bool Init() override;

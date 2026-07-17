@@ -7,6 +7,7 @@
 
 #include "nuke_commonvars.hpp"
 #include "nuke_math.hpp"
+#include "nuke_macros.hpp"
 
 namespace nuke
 {
@@ -26,26 +27,26 @@ public:
     virtual Vector2 GetSize() = 0;
 
     // Return the tickrate used for simulating physics and logic.
-    virtual float GetTickRate() = 0;
+    virtual float GetTickRate() { return NUKE_DEFAULT_TICKRATE; }
 
     // Return the maximum framerate used for processing the game (0 for unlimited).
-    virtual float GetFpsMax() = 0;
+    virtual float GetFpsMax() { return 0.f; }
 
     // Called when the game interface has been attached to the engine.
-    virtual void OnEngineAttach() = 0;
+    virtual void OnEngineAttach() { }
 
     // Called on engine initialization, if the game engine already aggregates the
     // game interface.
-    virtual bool Init() = 0;
+    virtual bool Init() { return true; }
 
     // Per-frame method which is invoked by the engine after starting.
-    virtual bool PerFrame() = 0;
+    virtual bool PerFrame() { return true; }
 
     // Per-tick method which is invoked by the engine after starting.
-    virtual bool PerTick(bool last_per_frame) = 0;
+    virtual bool PerTick(bool last_per_frame) { return true; }
 
     // Called when the process exits.
-    virtual bool Exit(bool window_closed) = 0;
+    virtual bool Exit(bool window_closed) { return true; }
 };
 
 }   // namespace nuke

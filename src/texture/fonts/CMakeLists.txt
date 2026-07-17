@@ -1,0 +1,2 @@
+add_library(nuke_fonts INTERFACE)
+target_include_directories(nuke_fonts INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -23,3 +23,5 @@ This repository uses CMake 3.24 and up for building. Both single- and multi-conf
 
 ### Credits
 Some of the design philosophy is inspired by [Valve's Source game engine and its respective SDK](https://github.com/valvesoftware/source-sdk-2013).
+
+Additionally, the engine uses a WOFF2-compressed version of [Peter Hull's VT323 font](https://fonts.google.com/specimen/VT323), which is licensed under the [SIL Open Font License, Version 1.1](src/texture/fonts/OFL.txt).

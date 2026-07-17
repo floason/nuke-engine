@@ -10,6 +10,7 @@
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
+#include "texture.hpp"
 #include "renderer.hpp"
 
 namespace nuke
@@ -91,10 +92,10 @@ public:
 
 public:
     Renderer renderer;
+    CameraContext camera_context;
     
     MIX_Mixer* mixer                                                = nullptr;
     IGame* game                                                     = nullptr;
-    CameraContext camera_context;
     
 private:
     
