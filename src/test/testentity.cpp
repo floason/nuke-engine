@@ -91,11 +91,18 @@ void TestEntity::SetTexture(nuke::ITexture* texture, bool set_bounds)
     // If set_bounds is true, the entity's size should be reset to the texture's
     // size, with the centre of mass set to the centre of the texture.
     if (set_bounds)
-    {
-        collision.maxs = texture->GetSize() / 2.f;
-        collision.maxs.y = -collision.maxs.y;
-        collision.mins = -collision.maxs;
-    }
+        AdjustBounds();
+}
+
+// Adjust the bounds of the entity to match that of the loaded texture.
+void TestEntity::AdjustBounds()
+{
+    if (render_context.texture == nullptr)
+        return;
+
+    collision.maxs = render_context.texture->GetSize() / 2.f;
+    collision.maxs.y = -collision.maxs.y;
+    collision.mins = -collision.maxs;
 }
 
 // Adjust the centre origin of render context.

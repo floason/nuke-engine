@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "nuke.hpp"
 
@@ -47,6 +48,7 @@ public:
 public:
     SDL_Renderer* sdl_renderer              = nullptr;
     SDL_Window* sdl_window                  = nullptr;
+    TTF_TextEngine* sdl_text_engine         = nullptr;
 
 private:
     struct Renderable

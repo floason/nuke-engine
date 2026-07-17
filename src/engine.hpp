@@ -7,7 +7,6 @@
 
 #include <vector>
 #include <unordered_map>
-#include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"

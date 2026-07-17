@@ -21,7 +21,9 @@ TestEntityManager* entity_manager = &entity_manager_;
 static TestEntity* test4;
 static TestEntity* test5;
 static TestEntity* funny_entity = nullptr;
+static TestEntity* test7;
 static nuke::PixelBufferDescriptor descriptor(100, 100);
+static nuke::TextDescriptor text("");
 
 static float test4_x_base = 320;
 static float test4_y_base = -240;
@@ -116,6 +118,18 @@ bool TestGame::Init()
     cursor->collision.origin = { 320, -240 };
     cursor->AdjustRenderOrigin();
 
+    test7 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    test7->SetTexture(engine->CreateRawTexture("texture_text", &text));
+    test7->OwnTexture();
+    text.SetFont("C:/Windows/Fonts/arial.ttf");
+    text.SetBuffer("Hello World! I Am Text!");
+    text.SetFontSize(12);
+    text.SetWrapWidth(50);
+    text.SetHorizontalWrapAlignment(nuke::TextDescriptor::HORIZONTAL_CENTRE);
+    test7->AdjustBounds();
+    test7->collision.origin = { 50, -50 }; // You can change horizontal/vertical alignment using mins/maxs.
+    test7->AdjustRenderOrigin();
+
     nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
     sound->Play(true);
     sound->SetPlaybackSpeed(1.02);
@@ -195,6 +209,30 @@ bool TestGame::PerTick(bool last_per_frame)
         }
     }
     descriptor.buffer->Unlock();
+
+    static int color_r = 0;
+    static int color_direction = 4;
+    color_r += color_direction;
+    if (color_r > 255)
+    {
+        color_r = 255 - (color_r - 255);
+        color_direction = -5;
+    }
+    else if (color_r < 0)
+    {
+        color_r = -color_r;
+        color_direction = 5;
+    }
+    text.SetColor({ (uint8_t)color_r, 0, 0, 255 });
+
+    if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 5)
+        text.SetFont("C:/Windows/Fonts/sserife.fon");
+    else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 8)
+        text.SetFont("C:/Windows/Fonts/arial.ttf");
+    else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 10)
+        text.SetFontSize(25.f);
+    else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 12)
+        text.SetFontStyleFlags(nuke::TextDescriptor::FONT_STYLE_BOLD);
 
     return true;
 }

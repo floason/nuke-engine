@@ -62,8 +62,8 @@ const char* Engine::GetLastError()
     const char* sdl_error = SDL_GetError();
     if (std::strlen(sdl_error) > 0)
     {
-        SDL_ClearError();
         std::snprintf(error_, sizeof(error_), "SDL error: %s", sdl_error);
+        SDL_ClearError();
     }
 
     // Always return the engine instance's error_ buffer.

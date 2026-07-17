@@ -19,21 +19,23 @@ TextureStream::TextureStream(PixelBufferDescriptor* descriptor) :
 {
     type_ = TextureType::TextureStream;
 
-    SDL_Texture* texture = SDL_CreateTexture(
-        engine.renderer.sdl_renderer,
-        SDL_PIXELFORMAT_RGBA32,
-        SDL_TEXTUREACCESS_STREAMING,
-        descriptor->GetWidth(),
-        descriptor->GetHeight()
-    );
-    if (texture == nullptr)
+    if (descriptor != nullptr)
     {
-        texture = engine.renderer.GetMissingTexture();
+        texture_ = SDL_CreateTexture(
+            engine.renderer.sdl_renderer,
+            SDL_PIXELFORMAT_RGBA32,
+            SDL_TEXTUREACCESS_STREAMING,
+            descriptor->GetWidth(),
+            descriptor->GetHeight()
+        );
+    }
+    if (texture_ == nullptr)
+    {
+        texture_ = engine.renderer.GetMissingTexture();
         loaded_ = false;
     }
 
-    descriptor->buffer = new PixelBuffer(texture);
-    texture_.reset(texture);
+    descriptor->buffer = new PixelBuffer(texture_);
 }
 
 // Destroy the descriptor's pixel buffer instance on de-allocation.
@@ -50,6 +52,11 @@ TextureStream::~TextureStream()
 // - scale - determines whether the texture should scale to fill the size vector
 void TextureStream::Draw(Vector2 origin, RenderContext& context)
 {
+    // Unlock the texture if the pixel buffer is ready to update. This is
+    // required fro copying the pixel buffer contents back into video memory.
+    if (descriptor_->buffer != nullptr && descriptor_->buffer->Ready())
+        SDL_UnlockTexture(texture_);
+
     static_cast<TextureSDL*>(this)->Draw(origin, context);
 }
 

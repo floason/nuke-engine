@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 // This header defines a pixel buffer abstract class which is populated by the 
-// engine,alongside its parent pixel buffer descriptor class which is created 
+// engine, alongside its parent pixel buffer descriptor class which is created 
 // by the consumer
 
 #pragma once
@@ -25,21 +25,21 @@ public:
     virtual Color* Lock() = 0;
 
 public:
-    int Pitch()
+    inline int Pitch()
     {
         return pitch_;
     }
     
     // Signal to the engine that the pixel buffer should be copied into
     // video memory.
-    void Unlock()
+    inline void Unlock()
     {
         update_ = true;
     }
 
     // Is the pixel buffer ready to update? This should be called only by
     // engine code.
-    bool Ready()
+    inline bool Ready()
     {
         if (!update_)
             return false;

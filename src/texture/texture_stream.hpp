@@ -11,12 +11,8 @@
 namespace nuke
 {
 
-class Renderer;
-
 class TextureStream : public TextureSDL
 {   
-    friend Renderer;
-
 public:
     // Create a new streamed texture using a pixel buffer struct.
     TextureStream(PixelBufferDescriptor* descriptor);

@@ -10,18 +10,19 @@
 namespace nuke
 {
 
-TextureSDL::TextureSDL() :
-    texture_(nullptr, SDL_DestroyTexture)
+// Destroy the SDL texture if owned by this texture instance.
+TextureSDL::~TextureSDL()
 {
+    if (texture_ != nullptr && texture_ != engine.renderer.GetMissingTexture())
+        delete texture_;
 }
-
+    
 // Get the size of the texture as a vector.
 Vector2 TextureSDL::GetSize()
 {
-    SDL_Texture* texture = Get();
-    if (texture == nullptr)
-        return Vector2(0, 0);
-    return Vector2(texture->w, texture->h);
+    if (texture_ == nullptr)
+        return Vector2(0.f, 0.f);
+    return Vector2(texture_->w, texture_->h);
 }
 
 // Draw this texture.
@@ -43,13 +44,7 @@ void TextureSDL::Draw(Vector2 origin, RenderContext& context)
         context.render_size.x,
         context.render_size.y
     };
-    SDL_RenderTexture(engine.renderer.sdl_renderer, Get(), &source, &dest);
-}
-
-// Retrieve the SDL texture instance as a raw pointer.
-SDL_Texture* TextureSDL::Get()
-{
-    return texture_.get();
+    SDL_RenderTexture(engine.renderer.sdl_renderer, texture_, &source, &dest);
 }
 
 }   // namespace nuke

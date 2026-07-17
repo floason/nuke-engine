@@ -17,7 +17,8 @@ namespace nuke
 class TextureSDL : public TextureBase
 {
 public:
-    TextureSDL();
+    // Destroy the SDL texture if owned by this texture instance.
+    virtual ~TextureSDL() override;
 
 // ITexture
 public:
@@ -32,12 +33,8 @@ public:
     // - scale - determines whether the texture should scale to fill the size vector
     void Draw(Vector2 origin, RenderContext& context);
 
-    // Retrieve the SDL texture instance as a raw pointer.
-    SDL_Texture* Get();
-
 protected:
-    using unique_texture = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
-    unique_texture texture_;
+    SDL_Texture* texture_   = nullptr;
 };
 
 }   // namespace nuke

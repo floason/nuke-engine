@@ -58,6 +58,9 @@ public:
     // Set the entity's texture.
     void SetTexture(nuke::ITexture* texture, bool set_bounds = true);
 
+    // Adjust the bounds of the entity to match that of the loaded texture.
+    void AdjustBounds();
+
     // Adjust the centre origin of render context.
     void AdjustRenderOrigin();
 

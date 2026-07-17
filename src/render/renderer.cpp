@@ -5,6 +5,8 @@
 // and is responsible for drawing them.
 
 #include <cassert>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "nuke.hpp"
 #include "engine.hpp"
@@ -74,6 +76,12 @@ bool Renderer::Init(Vector2& game_size)
     }
     SDL_UnlockTexture(missing_texture_);
 
+    if (!TTF_Init())
+        return false;
+    
+    if ((sdl_text_engine = TTF_CreateRendererTextEngine(sdl_renderer)) == nullptr)
+        return false;
+
     return true;
 }
 
@@ -104,29 +112,13 @@ void Renderer::DrawFrame()
         Vector2 centre_origin = renderable.context->origin - engine.camera_context.camera_offset;
         switch (texture->GetType())
         {
-            case TextureType::TextureRect:
-            {
-                static_cast<TextureRect*>(texture)->Draw(centre_origin, *renderable.context);
+#define X(TYPE)                                                                         \
+            case TextureType::TYPE:                                                     \
+                static_cast<TYPE*>(texture)->Draw(centre_origin, *renderable.context);  \
                 break;
-            }
-
-            case TextureType::TextureStream:
-            {
-                // If the texture is a TextureStream instance and its pixel buffer
-                // has been recently updated, it should be copied to the GPU.
-                TextureStream* stream = static_cast<TextureStream*>(texture);
-                if (stream->descriptor_ != nullptr && stream->descriptor_->buffer->Ready())
-                    SDL_UnlockTexture(stream->Get());
-
-                // This falls into the next case as both TextureStream and
-                // TextureImage inherit from TextureSDL.
-            }
-
-            case TextureType::TextureImage:
-            {
-                static_cast<TextureSDL*>(texture)->Draw(centre_origin, *renderable.context);
-                break;
-            }
+            
+            TEXTURE_TYPE_MACROS
+#undef X
 
             default:
                 assert(false && "Unkown texture type!");
@@ -146,6 +138,9 @@ void Renderer::Shutdown()
         SDL_DestroyWindow(sdl_window);
     if (sdl_renderer != nullptr)
         SDL_DestroyRenderer(sdl_renderer);
+    if (sdl_text_engine != nullptr)
+        TTF_DestroyRendererTextEngine(sdl_text_engine);
+    TTF_Quit();
     renderables_.clear();
 }
 

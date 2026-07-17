@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 include(GNUInstallDirs)
 
-project(nuke VERSION 0.3.1 LANGUAGES C CXX)
+project(nuke VERSION 0.5.0 LANGUAGES C CXX)
 
 # This engine uses SDL3 so as to power the Rust 2D engine as a whole.
 option(NUKE_USE_VENDORED_SDL3 "Compile SDL3 submodule instead of using SDL3 package" OFF)
@@ -17,15 +17,20 @@ if(NOT NUKE_USE_VENDORED_SDL3)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_mixer")
         list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_mixer/cmake")
     endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_ttf")
+        list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/SDL3_ttf/cmake")
+    endif()
 
     if(NUKE_LINK_SDL3_STATIC)
         find_package(SDL3 REQUIRED COMPONENTS SDL3-static)
         find_package(SDL3_image REQUIRED COMPONENTS SDL3_image-static)
         find_package(SDL3_mixer REQUIRED COMPONENTS SDL3_mixer-static)
+        find_package(SDL3_ttf REQUIRED COMPONENTS SDL3_ttf-static)
     else()
         find_package(SDL3 REQUIRED COMPONENTS SDL3-shared)
         find_package(SDL3_image REQUIRED COMPONENTS SDL3_image-shared)
         find_package(SDL3_mixer REQUIRED COMPONENTS SDL3_mixer-shared)
+        find_package(SDL3_ttf REQUIRED COMPONENTS SDL3_ttf-shared)
     endif()
 else()
     set(NUKE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
@@ -35,10 +40,11 @@ else()
         set(SDL_STATIC ON CACHE BOOL "" FORCE)
         add_subdirectory(submodules/SDL EXCLUDE_FROM_ALL)
 
-        # For some reason, SDL_image's CMakeLists.txt decides which SDL3 target
-        # to link against based on the value of SDLIMAGE_BUILD_SHARED_LIBS...
-        # which by default is set to ${BUILD_SHARED_LIBS}. This needs to be
-        # forcibly overwritten based on how SDL3 is being linked by Nuke!
+        # For some reason, the other SDL libraries' CMakeLists.txt decide 
+        # which SDL3 target to link against based on the value of 
+        # SDLIMAGE_BUILD_SHARED_LIBS... which by default is set to 
+        # ${BUILD_SHARED_LIBS}. This needs to be forcibly overwritten based on 
+        # how SDL3 is being linked by Nuke!
         set(BUILD_SHARED_LIBS OFF)
     else()
         set(SDL_SHARED ON CACHE BOOL "" FORCE)
@@ -51,6 +57,7 @@ else()
 
     add_subdirectory(submodules/SDL_image EXCLUDE_FROM_ALL)
     add_subdirectory(submodules/SDL_mixer EXCLUDE_FROM_ALL)
+    add_subdirectory(submodules/SDL_ttf EXCLUDE_FROM_ALL)
     set(BUILD_SHARED_LIBS ${NUKE_BUILD_SHARED_LIBS})
 endif()
 

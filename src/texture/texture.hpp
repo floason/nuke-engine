@@ -11,3 +11,4 @@
 #include "texture_rect.hpp"
 #include "texture_image.hpp"
 #include "texture_stream.hpp"
+#include "texture_text.hpp"

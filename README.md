@@ -19,6 +19,7 @@ This repository uses CMake 3.24 and up for building. Both single- and multi-conf
 - [SDL3](https://github.com/libsdl-org/SDL)
 - [SDL3_image](https://github.com/libsdl-org/SDL_image)
 - [SDL3_mixer](https://github.com/libsdl-org/SDL_mixer)
+- [SDL3_ttf](https://github.com/libsdl-org/SDL_ttf)
 
 ### Credits
 Some of the design philosophy is inspired by [Valve's Source game engine and its respective SDK](https://github.com/valvesoftware/source-sdk-2013).

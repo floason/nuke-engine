@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 // Classes which inherit from this class can have method calls be dispatched
-// by the engine at a later time period.
+// by the engine at a later time period on a per-tick basis.
 
 #pragma once
 

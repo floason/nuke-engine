@@ -8,17 +8,24 @@
 #include "nuke.hpp"
 #include "texture_factory.hpp"
 
+#define TEXTURE_TYPE_MACROS \
+    X(TextureRect)          \
+    X(TextureImage)         \
+    X(TextureStream)        \
+    X(TextureText)
+
 namespace nuke
 {
 
 enum class TextureType
 {
-    TextureBase,   // This texture is not usable!
+    // The following manually specified types cannot be drawn!
+    TextureBase,
     TextureTest,
 
-    TextureRect,
-    TextureImage,
-    TextureStream
+#define X(TYPE) TYPE,
+    TEXTURE_TYPE_MACROS
+#undef X
 };
 
 // Base texture class. This can not be drawn and all texture classes must

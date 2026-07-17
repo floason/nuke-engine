@@ -29,7 +29,7 @@ TextureImage::TextureImage(const char* path)
     else
         path_ = path;
 
-    texture_.reset(texture);
+    texture_ = texture;
     path_ = path;
 }
 
