@@ -18,8 +18,17 @@ namespace nuke
 // Both GameVar and GameCmd inherit from this.
 class GameVarBase
 {
+public:
+    enum Flags
+    {
+        FLAG_NONE   = 0,
+
+        FLAG_HIDDEN = (1 << 0), // Hide this game variable from the player.
+    };
+
 protected:
-    GameVarBase(const char* name, const char* description = "")
+    GameVarBase(const char* name, const char* description = "", Flags flags = FLAG_NONE) :
+        flags_(flags)
     {
         name_ = new char[strlen(name) + 1]();
         strcpy(name_, name);
@@ -63,12 +72,25 @@ public:
         return description_;
     }
 
+    // Get this game variable's flags.
+    inline Flags GetFlags()
+    {
+        return flags_;
+    }
+
+    // Set this game variable's flags.
+    inline void SetFlags(Flags flags)
+    {
+        flags_ = flags;
+    }
+
 private:
     char* name_             = nullptr;
     char* description_      = nullptr;
 
 protected:
     bool is_cmd_            = false;
+    Flags flags_            = FLAG_NONE;
 };
 
 class GameVar : public GameVarBase
@@ -87,8 +109,9 @@ public:
             int value, 
             const char* description = "",
             int min = -1, 
-            int max = -1) :
-        GameVarBase(name, description),
+            int max = -1,
+            Flags flags = FLAG_NONE) :
+        GameVarBase(name, description, flags),
         value_type_(TYPE_INT)
     {
         SetInt(value);
@@ -105,8 +128,9 @@ public:
             float value, 
             const char* description = "", 
             float min = -1.f, 
-            float max = -1.f) :
-        GameVarBase(name, description),
+            float max = -1.f,
+            Flags flags = FLAG_NONE) :
+        GameVarBase(name, description, flags),
         value_type_(TYPE_FLOAT)
     {
         SetFloat(value);
@@ -119,8 +143,8 @@ public:
     }
 
     // Initialize the game variable with a string value.
-    GameVar(const char* name, const char* value, const char* description = "") :
-        GameVarBase(name, description),
+    GameVar(const char* name, const char* value, const char* description = "", Flags flags = FLAG_NONE) :
+        GameVarBase(name, description, flags),
         value_type_(TYPE_STRING)
     {
         SetString(value);
@@ -322,8 +346,8 @@ public:
 public:
     // Initialize the game command using a callback function that accepts
     // parameters.
-    GameCmd(const char* name, CallbackFunc func, const char* description = "") :
-        GameVarBase(name, description),
+    GameCmd(const char* name, CallbackFunc func, const char* description = "", Flags flags = FLAG_NONE) :
+        GameVarBase(name, description, flags),
         func_(func)
     {
         callback_requires_params_ = true;
@@ -332,8 +356,11 @@ public:
 
     // Initialize the game command using a callback function that does not
     // accept parameters.
-    GameCmd(const char* name, CallbackFuncNoParams func, const char* description = "") :
-        GameVarBase(name, description),
+    GameCmd(const char* name, 
+            CallbackFuncNoParams func, 
+            const char* description = "", 
+            Flags flags = FLAG_NONE) :
+        GameVarBase(name, description, flags),
         func_no_params_(func)
     {
         construct();

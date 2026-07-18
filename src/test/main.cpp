@@ -16,7 +16,7 @@ static int engine_failed()
     return EXIT_FAILURE;
 }
 
-int main()
+int main(int argc, char** argv)
 {
     engine = nuke::IEngine::GetEngineAPI(
         nuke::engine_major, 
@@ -31,7 +31,7 @@ int main()
 
     engine->SetGameInterface(game);
     engine->PrintVersion();
-    if (!engine->Init())
+    if (!engine->Init(argc - 1, &argv[1])) // The first parameter is always the loaded binary path.
         return engine_failed();
     if (!engine->Start())
         return engine_failed();

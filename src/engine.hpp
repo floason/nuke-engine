@@ -39,8 +39,10 @@ public:
     // Aggregate the game interface instance.
     virtual void SetGameInterface(IGame* game) override;
 
-    // Initialize the engine.
-    virtual bool Init() override;
+    // Initialize the engine. Command-line arguments may be passed to this method
+    // so as to parse any game variable modifications. The first argument must be
+    // after the program name argument!
+    virtual bool Init(int argc = 0, char** argv = nullptr) override;
 
     // Precache an image texture.
     virtual bool PrecacheImage(const char* path, 
@@ -131,13 +133,13 @@ private:
     // time.
     std::vector<Updatable*> updatables_;
 
-    // TODO: hide by default when engine variables introduced
     TextureText* fps_counter_                                           = nullptr;
     TextDescriptor fps_counter_descriptor_;
     RenderContext fps_counter_render_context_;
 
     GameVar fps_max_                = GameVar("fps_max", 0.f, "Framerate cap (set to 0 to disable)", 1.f);
     GameVar max_ticks_per_frame_    = GameVar("max_ticks_per_frame", NUKE_MAX_TICKS_PER_FRAME, "", 1);
+    GameVar show_fps                = GameVar("show_fps", false);
 };
 
 extern Engine engine;

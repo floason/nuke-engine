@@ -46,8 +46,10 @@ public:
     // Aggregate the game interface instance.
     virtual void SetGameInterface(IGame* game) = 0;
 
-    // Initialize the engine.
-    virtual bool Init() = 0;
+    // Initialize the engine. Command-line arguments may be passed to this method
+    // so as to parse any game variable modifications. The first argument must be
+    // after the program name argument!
+    virtual bool Init(int argc = 0, char** argv = nullptr) = 0;
 
     // Precache an image texture.
     virtual bool PrecacheImage(const char* path, 

@@ -83,8 +83,9 @@ void Engine::SetGameInterface(IGame* game)
     game->OnEngineAttach();
 }
 
-// Initialize the engine.
-bool Engine::Init()
+// Initialize the engine. Command-line arguments may be passed to this method
+// so as to modify any game variables or 
+bool Engine::Init(int argc, char** argv)
 {
     if (game == nullptr)
     {
@@ -116,6 +117,62 @@ bool Engine::Init()
 
     InstallGameVar(&fps_max_);
     InstallGameVar(&max_ticks_per_frame_);
+    InstallGameVar(&show_fps);
+
+    // If any command-line arguments (from argv[1] onwards) were provided,
+    // these should be parsed so as to allow for the modification of game
+    // variables.
+    //
+    // Syntax: --gvar1 value1 --gvar2 value2 ...
+    GameVar* variable = nullptr;
+    for (int i = 0; i < argc; i++)
+    {
+        // Stop early if the indexed argument is nullptr.
+        if (argv[i] == nullptr)
+            break;
+
+        // Locate the game variable first. Hidden game variables cannot be 
+        // modified.
+        if (variable == nullptr)
+        {
+            if (std::strlen(argv[i]) <= 2
+                || std::strncmp(argv[i], "--", 2) != 0 
+                || (variable = FindGameVar(&argv[i][2])) == nullptr
+                || variable->GetFlags() & GameVarBase::FLAG_HIDDEN)
+            {
+                std::cout << "Invalid variable name: " << argv[i] << std::endl;
+            }
+            continue;
+        }
+        
+        // Attempt to update the game variable's value.
+        switch (variable->GetType())
+        {
+            case GameVar::TYPE_INT:
+            {
+                variable->SetInt(std::stoi(argv[i]));
+                break;
+            }
+
+            case GameVar::TYPE_FLOAT:
+            {
+                variable->SetFloat(std::stof(argv[i]));
+                break;
+            }
+
+            case GameVar::TYPE_STRING:
+            {
+                variable->SetString(argv[i]);
+                break;
+            }
+        }
+        variable = nullptr;
+    }
+    if (variable != nullptr)
+    {
+        std::cout << "Missing value while attempting to modify game variable: " << variable->GetName() <<
+                     std::endl;
+    }
 
     return true;
 }
@@ -333,8 +390,11 @@ bool Engine::Start()
 
         // Render the FPS counter after the rendering stage so as to draw it on top
         // of everything else.
-        fps_counter_descriptor_.SetBuffer(std::string("fps: ") + std::to_string((int)vars.fps));
-        fps_counter_->Draw(fps_counter_render_context_.origin, fps_counter_render_context_);
+        if (show_fps.GetInt())
+        {
+            fps_counter_descriptor_.SetBuffer(std::string("fps: ") + std::to_string((int)vars.fps));
+            fps_counter_->Draw(fps_counter_render_context_.origin, fps_counter_render_context_);
+        }
 
         // Update the screen.
         renderer.EndFrame();
