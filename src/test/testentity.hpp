@@ -16,10 +16,6 @@ public:
     // Create a new entity by classname.
     nuke::IEntity* CreateEntity(const char* name);
 
-    // Get the next entity. The first entity listed is returned if first is NULL.
-    // Returns NULL when all entities have been traversed.
-    nuke::IEntity* GetEntity(nuke::IEntity* first = nullptr);
-
 private:
     entity_list entities_;
 };
@@ -32,7 +28,8 @@ public:
     // Set entity default properties.
     TestEntity();
 
-    // Remove this entity from the renderer's list.
+    // Remove this entity from the renderer's list and delete its texture,
+    // if owned.
     virtual ~TestEntity() override;
 
 // nuke::IRenderable
@@ -69,7 +66,6 @@ public:
     nuke::RenderContext render_context;
 
 private:
-    entity_list::iterator it_;
     nuke::RenderHandle render_handle_   = nuke::InvalidRenderHandle;
     bool owns_texture_                  = false;
 };

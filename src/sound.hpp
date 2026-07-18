@@ -14,7 +14,7 @@
 namespace nuke
 {
 
-class Sound : public ISound, public Updatable
+class Sound : public ISound, public IEventListener, public Updatable
 {
 public:
     // Load an existing sound file into memory.
@@ -91,12 +91,21 @@ public:
     // so long as the sound is alive.
     virtual const char* GetLoadedPath() const override;
 
+// IEventListener
+public:
+    // Called when an event is signalled.
+    virtual void OnSignalEvent(IEvent* event) override;
+
 private:
     // Create a new track after creating a MIX_Audio* instance.
     bool createTrack();
 
     // Adjust audio attenuation per-tick if bound to a physics context.
     void adjustAudioAttenuation();
+
+    // Toggle whether this sound instance is listening for collideable
+    // deletion.
+    void toggleCollideableRemovalListen();
 
 private:
     using unique_track = std::unique_ptr<MIX_Track, decltype(&MIX_DestroyTrack)>;
@@ -117,15 +126,15 @@ private:
     // panning and pitch given that the sound is parented to a collideable's
     // physics context.
     friend void adjust_sound_attenuation(void* userdata);
-    float gain_                 = 1.f;
-    float inv_log_max_          = 0.2f;     // Assumes an approximate max distance of 100,000 pixels.
-                                            // (Exact constant would be 1/log10(100,000 + 1).)
-    float pitch_multiplier_     = 1.f;
-    PhysicsContext* parent_ = nullptr;
+    float gain_                                 = 1.f;
+    float inv_log_max_                          = 0.2f; // Assumes an approximate max distance of 100,000 
+                                                        // pixels ~ 1/log10(100,000 + 1).
+    float pitch_multiplier_                     = 1.f;
+    PhysicsContext* parent_                     = nullptr;
 
     // Used for Doppler effect calculations. This is just a trial-and-error
     // constant!
-    static constexpr float speed_of_sound = 135000.f;
+    static constexpr float speed_of_sound       = 135000.f;
 };
 
 }   // namespace nuke

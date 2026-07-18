@@ -8,12 +8,17 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdint>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
 #include "engine.hpp"
 #include "sound.hpp"
+#include "event.hpp"
+#include "renderer.hpp"
 #include "texture.hpp"
 
 namespace nuke
@@ -292,6 +297,57 @@ GameCmd* Engine::FindGameCmd(const char* name)
     return static_cast<GameCmd*>(gamevar);
 }
 
+// Create a new event.
+IEvent* Engine::CreateEvent(const char* name)
+{
+    return new Event(name);
+}
+
+// Fire an event object. This will delete the event object afterwards.
+void Engine::FireEvent(IEvent* event)
+{
+    if (event == nullptr)
+        return;
+    
+    // Check whether any listeners are listening to this event.
+    const char* name = event->GetName();
+    for (auto& listener : event_manager_)
+    {
+        if (listener.second.find(name) != listener.second.end())
+            listener.first->OnSignalEvent(event);
+    }
+
+    delete event;
+}
+
+// Add an event listener for a given event name.
+void Engine::AddEventListener(IEventListener* listener, const char* name)
+{
+    if (event_manager_.find(listener) == event_manager_.end())
+        event_manager_[listener] = std::unordered_set<std::string>();
+    if (event_manager_[listener].find(name) == event_manager_[listener].end())
+        event_manager_[listener].insert(name);
+}
+
+// Remove an event listener.
+bool Engine::RemoveEventListener(IEventListener* listener, const char* name)
+{
+    if (event_manager_.find(listener) == event_manager_.end())
+        return false;
+
+    if (name == nullptr)
+    {
+        event_manager_.erase(listener);
+        return true;
+    }
+
+    if (event_manager_[listener].find(name) == event_manager_[listener].end())
+        return false;
+
+    event_manager_[listener].erase(name);
+    return true;
+}
+
 // Dispatch an updatable's invokation at a later time period.
 void Engine::DispatchUpdate(Updatable* updatable, float time_of_dispatch)
 {
@@ -453,6 +509,7 @@ bool Engine::Shutdown()
     precached_images_.clear();
     precached_sounds_.clear();
     precached_gamevars_.clear();
+    event_manager_.clear();
 
     if (mixer != nullptr)
         MIX_DestroyMixer(mixer);

@@ -28,6 +28,32 @@ static nuke::TextDescriptor text("");
 static float test4_x_base = 320;
 static float test4_y_base = -240;
 
+// Used for testing event invokation.
+class TestEventListener : public nuke::IEventListener
+{
+public:
+    TestEventListener()
+    {
+        engine->AddEventListener(this, "the most event ever");
+        engine->AddEventListener(this, "the least event ever");
+    }
+
+    ~TestEventListener()
+    {
+        engine->RemoveEventListener(this);
+    }
+
+// nuke::IEventListener
+public:
+    // Called when an event is signalled.
+    virtual void OnSignalEvent(nuke::IEvent* event) override
+    {
+        std::cout << "EVENT SIGNALLED! " << event->GetName() << std::endl;
+    }
+};
+
+static TestEventListener* listener;
+
 // Get a reference to the game's common variables struct.
 nuke::CommonVars& TestGame::GetCommonVars()
 {
@@ -124,6 +150,8 @@ bool TestGame::Init()
     // test
     delete engine->CreateRawTexture("texture_test", 3, "hi");
 
+    listener = new TestEventListener();
+
     return true;
 }
 
@@ -149,7 +177,7 @@ bool TestGame::PerTick(bool last_per_frame)
         test4->AdjustRenderOrigin();
     }
 
-    if (funny_entity == nullptr && commonvars.curtime >= 8)
+    if (funny_entity == nullptr && commonvars.curtime >= 8 && commonvars.curtime < 12)
     {
         funny_entity = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
         funny_entity->render_context.render_size = { 100, 100 };
@@ -168,6 +196,14 @@ bool TestGame::PerTick(bool last_per_frame)
     {
         funny_entity->collision.origin.x += funny_entity->collision.velocity.x * commonvars.tick_interval;
         funny_entity->AdjustRenderOrigin();
+
+        if (commonvars.curtime >= 12)
+        {
+            std::cout << "deleting funny entity" << std::endl;
+
+            delete funny_entity;
+            funny_entity = nullptr;
+        }
     }
 
     static int frame = 0;
@@ -218,6 +254,18 @@ bool TestGame::PerTick(bool last_per_frame)
         text.SetFontSize(25.f);
     else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 12)
         text.SetFontStyleFlags(nuke::TextDescriptor::FONT_STYLE_BOLD);
+
+    if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 5)
+    {
+        nuke::IEvent* event = engine->CreateEvent("the most event ever");
+        engine->FireEvent(event);
+    }
+
+    if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 7)
+    {
+        nuke::IEvent* event = engine->CreateEvent("the least event ever");
+        engine->FireEvent(event);
+    }
 
     return true;
 }

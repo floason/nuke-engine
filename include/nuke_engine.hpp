@@ -11,6 +11,7 @@
 #include "nuke_macros.hpp"
 #include "nuke_camera.hpp"
 #include "nuke_gamevar.hpp"
+#include "nuke_event.hpp"
 
 namespace nuke
 {
@@ -100,6 +101,19 @@ public:
 
     // Find a game command by name.
     virtual GameCmd* FindGameCmd(const char* name) = 0;
+
+    // Create a new event.
+    virtual IEvent* CreateEvent(const char* name) = 0;
+
+    // Fire an event object. This will delete the event object afterwards.
+    virtual void FireEvent(IEvent* event) = 0;
+
+    // Add an event listener for a given event name.
+    virtual void AddEventListener(IEventListener* listener, const char* name) = 0;
+
+    // Remove an event listener. Leave name as nullptr to stop listening to every
+    // single event.
+    virtual bool RemoveEventListener(IEventListener* listener, const char* name = nullptr) = 0;
 
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) = 0;

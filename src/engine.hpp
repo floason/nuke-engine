@@ -7,10 +7,12 @@
 
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
 #include "texture.hpp"
+#include "event.hpp"
 #include "renderer.hpp"
 
 namespace nuke
@@ -94,6 +96,19 @@ public:
     // Find a game command by name.
     virtual GameCmd* FindGameCmd(const char* name) override;
 
+    // Create a new event.
+    virtual IEvent* CreateEvent(const char* name) override;
+
+    // Fire an event object. This will delete the event object afterwards.
+    virtual void FireEvent(IEvent* event) override;
+
+    // Add an event listener for a given event name.
+    virtual void AddEventListener(IEventListener* listener, const char* name) override;
+
+    // Remove an event listener. Leave name as nullptr to stop listening to every
+    // single event.
+    virtual bool RemoveEventListener(IEventListener* listener, const char* name = nullptr) override;
+
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) override;
 
@@ -127,6 +142,7 @@ private:
     std::unordered_map<std::string, ITexture*> precached_images_;
     std::unordered_map<std::string, ISound*> precached_sounds_;
     std::unordered_map<std::string, GameVarBase*> precached_gamevars_;
+    std::unordered_map<IEventListener*, std::unordered_set<std::string>> event_manager_;
     char error_[256];
 
     // Keep track of updatables whose methods should be dispatched at a specified

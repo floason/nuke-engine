@@ -4,6 +4,7 @@
 // Base sound class which incorporates the ISound interface.
 
 #include <cstddef>
+#include <cstring>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
@@ -97,6 +98,7 @@ Sound::~Sound()
 {
     if (owns_audio_ && audio_ != nullptr)
         MIX_DestroyAudio(audio_);
+    toggleCollideableRemovalListen();
 }
 
 // Has the sound instance loaded successfully?
@@ -241,6 +243,8 @@ void Sound::SetParentEntity(ICollideable* collideable)
         MIX_SetTrackGain(track_.get(), volume_);
         parent_ = nullptr;
     }
+
+    toggleCollideableRemovalListen();
 }
 
 // Set the max falloff distance for the audio, given it has a parent
@@ -258,6 +262,22 @@ bool Sound::SetMaxDistance(float dist)
 const char* Sound::GetLoadedPath() const
 {
     return path_.c_str();
+}
+
+// Called when an event is signalled.
+void Sound::OnSignalEvent(IEvent* event)
+{
+    // TODO: this doesn't seem like a good design choice particularly as
+    // it relies on SDK code to signal collideable deletion + every sound
+    // is now signalled of every collideable deletion.
+    //
+    // use entity handles to resolve lifetime in the future?
+
+    // The only event sound instances are bound to is collideable_removed.
+    // If the physics context of the collideable is aggregated to this
+    // sound instance, it must be immediately decoupled.
+    if (event->GetPointer("physics_context") == static_cast<void*>(parent_))
+        SetParentEntity(nullptr);
 }
 
 // Create a new track after creating a MIX_Audio* instance.
@@ -280,11 +300,6 @@ bool Sound::createTrack()
 // alongside audio panning and playback speed (doppler effect).
 void Sound::adjustAudioAttenuation()
 {
-    // TODO: come back to this when entity deletion interface is
-    // implemented for implementing sound instance destruction
-    // (maybe give delay for entity deletion sequence + validate future
-    // handle?)
-    
     if (parent_ == nullptr)
         return;
 
@@ -311,6 +326,16 @@ void Sound::adjustAudioAttenuation()
     MIX_SetTrackFrequencyRatio(track_.get(), playback_speed_ * pitch_multiplier_);
 
     engine.DispatchUpdate(this);
+}
+
+// Toggle whether this sound instance is listening for collideable
+// deletion.
+void Sound::toggleCollideableRemovalListen()
+{
+    if (parent_ == nullptr)
+        engine.RemoveEventListener(this, "collideable_removed");
+    else
+        engine.AddEventListener(this, "collideable_removed");
 }
 
 }   // namespace nuke

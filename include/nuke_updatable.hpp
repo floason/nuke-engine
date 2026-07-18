@@ -10,7 +10,7 @@
 
 // Call this function macro to set the update method of an updatable.
 #define SET_UPDATE(CLASS, METHOD)                                                                   \
-    SetUpdateFunc(&UpdateThunk<CLASS, &CLASS::METHOD>);
+    setUpdateFunc(&UpdateThunk<CLASS, &CLASS::METHOD>);
 
 namespace nuke
 {
@@ -23,9 +23,9 @@ private:
     friend Engine;
     using UpdateFunc = void (*)(Updatable* updatable);
 
-public:
+protected:
     // Set the update pointer.
-    inline void SetUpdateFunc(UpdateFunc func)
+    inline void setUpdateFunc(UpdateFunc func)
     {
         update_func_ptr = func;
     }

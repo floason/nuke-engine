@@ -6,7 +6,11 @@
 // their respective bounding boxes.
 
 // Collideables must additionaly propagate a PhysicsContext struct to the
-// physics engine, which describes the entity's transform and state.s
+// physics engine, which describes the entity's transform and state.
+
+// In SDK code, it is recommended that any collideables fire the
+// "collideable_removed" event on de-allocation, with the physics_context
+// pointer set to the collideable's physics context instance.
 
 #pragma once
 

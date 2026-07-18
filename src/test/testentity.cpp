@@ -20,20 +20,9 @@ nuke::IEntity* TestEntityManager::CreateEntity(const char* name)
         entity->OwnTexture();
         
         entities_.emplace_front(entity);
-        entity->it_ = entities_.begin();
     }
 
     return entity;
-}
-
-// Get the next entity. The first entity listed is returned if first is NULL.
-// Returns NULL when all entities have been traversed.
-nuke::IEntity* TestEntityManager::GetEntity(nuke::IEntity* first)
-{
-    if (first == nullptr)
-        return !entities_.empty() ? entities_.front() : nullptr;
-    auto next = std::next(static_cast<TestEntity*>(first)->it_);
-    return (next != entities_.end()) ? *next : nullptr;
 }
 
 // Set entity default properties.
@@ -42,16 +31,23 @@ TestEntity::TestEntity()
     AddToRenderList(render_context);
 }
 
-// Remove this entity from the renderer's list.
+// Remove this entity from the renderer's list and delete its texture,
+// if owned.
 TestEntity::~TestEntity()
 {
+    nuke::IEvent* event = engine->CreateEvent("collideable_removed");
+    event->SetPointer("physics_context", &collision);
+    engine->FireEvent(event);
+
     RemoveFromRenderList();
+    if (owns_texture_)
+        delete render_context.texture;
 }
 
 // Propagate this renderable to the renderer.
 void TestEntity::AddToRenderList(nuke::RenderContext& context)
 {
-    renderer->AddRenderable(this, context);
+    render_handle_ = renderer->AddRenderable(this, context);
 }
 
 // Tell the renderer to stop tracking this renderer.
