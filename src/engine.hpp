@@ -142,7 +142,7 @@ private:
     std::unordered_map<std::string, ITexture*> precached_images_;
     std::unordered_map<std::string, ISound*> precached_sounds_;
     std::unordered_map<std::string, GameVarBase*> precached_gamevars_;
-    std::unordered_map<IEventListener*, std::unordered_set<std::string>> event_manager_;
+    std::unordered_map<std::string, std::unordered_set<IEventListener*>> event_manager_;
     char error_[256];
 
     // Keep track of updatables whose methods should be dispatched at a specified

@@ -1,8 +1,6 @@
 // floason (C) 2026
 // Licensed under the MIT License.
 
-
-
 #include <iostream>
 #include <cassert>
 #include <cstring>
@@ -311,10 +309,10 @@ void Engine::FireEvent(IEvent* event)
     
     // Check whether any listeners are listening to this event.
     const char* name = event->GetName();
-    for (auto& listener : event_manager_)
+    if (event_manager_.find(name) != event_manager_.end())
     {
-        if (listener.second.find(name) != listener.second.end())
-            listener.first->OnSignalEvent(event);
+        for (auto& listener : event_manager_[name])
+            listener->OnSignalEvent(event);
     }
 
     delete event;
@@ -323,28 +321,34 @@ void Engine::FireEvent(IEvent* event)
 // Add an event listener for a given event name.
 void Engine::AddEventListener(IEventListener* listener, const char* name)
 {
-    if (event_manager_.find(listener) == event_manager_.end())
-        event_manager_[listener] = std::unordered_set<std::string>();
-    if (event_manager_[listener].find(name) == event_manager_[listener].end())
-        event_manager_[listener].insert(name);
+    if (event_manager_.find(name) == event_manager_.end())
+        event_manager_[name] = std::unordered_set<IEventListener*>();
+    if (event_manager_[name].find(listener) == event_manager_[name].end())
+        event_manager_[name].insert(listener);
 }
 
 // Remove an event listener.
 bool Engine::RemoveEventListener(IEventListener* listener, const char* name)
 {
-    if (event_manager_.find(listener) == event_manager_.end())
-        return false;
-
+    // If name is nullptr, remove the listener from all listener vectors
+    // in the event manager.
     if (name == nullptr)
     {
-        event_manager_.erase(listener);
+        for (auto& listeners : event_manager_)
+        {
+            if (listeners.second.find(listener) != listeners.second.end())
+                listeners.second.erase(listener);
+        }
         return true;
     }
 
-    if (event_manager_[listener].find(name) == event_manager_[listener].end())
+    if (event_manager_.find(name) == event_manager_.end())
         return false;
 
-    event_manager_[listener].erase(name);
+    if (event_manager_[name].find(listener) == event_manager_[name].end())
+        return false;
+
+    event_manager_[name].erase(listener);
     return true;
 }
 
