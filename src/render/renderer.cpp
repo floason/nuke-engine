@@ -83,18 +83,35 @@ bool Renderer::Init(Vector2& game_size)
     if ((sdl_text_engine = TTF_CreateRendererTextEngine(sdl_renderer)) == nullptr)
         return false;
 
-    if ((default_font_io_stream = SDL_IOFromConstMem(vt323_ttf, vt323_ttf_len)) == nullptr)
+    if (!PrecacheFont(vt323_ttf, vt323_ttf_len, "default_engine_font"))
         return false;
 
     return true;
 }
 
-// Prepare drawing the next frame.
-void Renderer::BeginFrame()
+// Precache a font file.
+bool Renderer::PrecacheFont(const char* path, const char* as, bool overwrite)
 {
-    // Clear the screen.
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 0);
-    SDL_RenderClear(sdl_renderer);
+    if (precached_fonts_.find(path) != precached_fonts_.end() && !overwrite)
+        return false;
+
+    if (as == nullptr)
+        as = path;
+    return (precached_fonts_[as] = TTF_OpenFont(path, 12.f)) != nullptr;
+}
+
+// Precache a font file from a byte buffer.
+bool Renderer::PrecacheFont(const unsigned char* buffer, size_t length, const char* as, bool overwrite)
+{
+    if (precached_fonts_.find(as) != precached_fonts_.end() && !overwrite)
+        return false;
+
+    SDL_IOStream* stream = SDL_IOFromConstMem(buffer, length);
+    if (stream == nullptr)
+        return false;
+
+    // This closes the IO stream instance automatically.
+    return (precached_fonts_[as] = TTF_OpenFontIO(stream, true, 12.f)) != nullptr;
 }
 
 // Start the renderer prior to the engine's main loop.
@@ -108,6 +125,14 @@ void Renderer::Start()
     // TODO: split into separate render phases so that SDL_BLENDMODE_NONE is used
     // in place for solid objects?
     SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+}
+
+// Prepare drawing the next frame.
+void Renderer::BeginFrame()
+{
+    // Clear the screen.
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 0);
+    SDL_RenderClear(sdl_renderer);
 }
 
 // Take over from the engine to draw each managed renderable.
@@ -151,8 +176,17 @@ void Renderer::Shutdown()
         SDL_DestroyRenderer(sdl_renderer);
     if (sdl_text_engine != nullptr)
         TTF_DestroyRendererTextEngine(sdl_text_engine);
-    TTF_Quit();
+    
+    for (auto& font : precached_fonts_)
+    {
+        if (font.second != nullptr)
+            TTF_CloseFont(font.second);
+    }
+
     renderables_.clear();
+    precached_fonts_.clear();
+    
+    TTF_Quit();
 }
 
 }   // namespace nuke

@@ -118,9 +118,14 @@ bool Engine::Init()
 }
 
 // Precache an image texture.
-void Engine::PrecacheImage(const char* path)
+bool Engine::PrecacheImage(const char* path, const char* as, bool overwrite)
 {
-    precached_images_[path] = CreateRawTexture("texture_image", path);
+    if (precached_images_.find(path) != precached_images_.end() && !overwrite)
+        return false;
+
+    if (as == nullptr)
+        as = path;
+    return (precached_images_[as] = CreateRawTexture("texture_image", path)) != nullptr;
 }
 
 // Load a precached image texture. Returns NULL if not found.
@@ -133,9 +138,14 @@ ITexture* Engine::LoadImage(const char* path)
 }
 
 // Precache a sound path.
-void Engine::PrecacheSound(const char* path)
+bool Engine::PrecacheSound(const char* path, const char* as, bool overwrite)
 {
-    precached_sounds_[path] = new Sound(path);
+    if (precached_sounds_.find(path) != precached_sounds_.end() && !overwrite)
+        return false;
+    
+    if (as == nullptr)
+        as = path;
+    return (precached_sounds_[as] = new Sound(path)) != nullptr;
 }
 
 // Create a raw sound instance utilising a pre-existing float signed sample
@@ -167,6 +177,18 @@ ISound* Engine::CopySound(ISound* other, bool free_after_play)
     if (free_after_play)
         copy->DestroyOnFinish();
     return copy;
+}
+
+// Precache a font file.
+bool Engine::PrecacheFont(const char* path, const char* as, bool overwrite)
+{
+    return renderer.PrecacheFont(path, as, overwrite);
+}
+
+// Precache a font file from a byte buffer.
+bool Engine::PrecacheFont(const unsigned char* buffer, size_t length, const char* as, bool overwrite)
+{
+    return renderer.PrecacheFont(buffer, length, as, overwrite);
 }
 
 // Dispatch an updatable's invokation at a later time period.
@@ -308,11 +330,26 @@ bool Engine::Start()
 // on engine init failure.
 bool Engine::Shutdown()
 {
+    renderer.Shutdown();
+
+    for (auto& texture : precached_images_)
+    {
+        if (texture.second != nullptr)
+            delete texture.second;
+    }
+    for (auto& sound : precached_sounds_)
+    {
+        if (sound.second != nullptr)
+            delete sound.second;
+    }
+
+    precached_images_.clear();
+    precached_sounds_.clear();
+
     if (mixer != nullptr)
         MIX_DestroyMixer(mixer);
     if (fps_counter_ != nullptr)
         delete fps_counter_;
-    renderer.Shutdown();
     MIX_Quit();
     SDL_Quit();
     return true;

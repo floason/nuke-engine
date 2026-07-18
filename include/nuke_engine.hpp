@@ -49,13 +49,17 @@ public:
     virtual bool Init() = 0;
 
     // Precache an image texture.
-    virtual void PrecacheImage(const char* path) = 0;
+    virtual bool PrecacheImage(const char* path, 
+                               const char* as = nullptr, 
+                               bool overwrite = false) = 0;
 
     // Load a precached image texture.
     virtual ITexture* LoadImage(const char* path) = 0;
 
-    // Precache a sound path.
-    virtual void PrecacheSound(const char* path) = 0;
+    // Precache a sound file.
+    virtual bool PrecacheSound(const char* path, 
+                               const char* as = nullptr, 
+                               bool overwrite = false) = 0;
 
     // Create a raw sound instance utilising a pre-existing float signed sample
     // PCM buffer for the audio data, alongside frequency and channel information.
@@ -73,6 +77,17 @@ public:
     // be alive for the entire duration of this copy! Returns NULL if the base
     // sound instance did not load successfully.
     virtual ISound* CopySound(ISound* other, bool free_after_play = true) = 0;
+
+    // Precache a font file.
+    virtual bool PrecacheFont(const char* path, 
+                              const char* as = nullptr, 
+                              bool overwrite = false) = 0;
+
+    // Precache a font file from a byte buffer.
+    virtual bool PrecacheFont(const unsigned char* buffer, 
+                              size_t length, 
+                              const char* as, 
+                              bool overwrite = false) = 0;
 
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) = 0;

@@ -3,6 +3,8 @@
 
 // Defines a texture that holds an SDL_Texture* instance.
 
+#include <SDL3/SDL.h>
+
 #include "nuke.hpp"
 #include "engine.hpp"
 #include "texture_sdl.hpp"
@@ -14,7 +16,7 @@ namespace nuke
 TextureSDL::~TextureSDL()
 {
     if (texture_ != nullptr && texture_ != engine.renderer.GetMissingTexture())
-        delete texture_;
+        SDL_DestroyTexture(texture_);
 }
     
 // Get the size of the texture as a vector.

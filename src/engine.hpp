@@ -43,13 +43,17 @@ public:
     virtual bool Init() override;
 
     // Precache an image texture.
-    virtual void PrecacheImage(const char* path) override;
+    virtual bool PrecacheImage(const char* path, 
+                               const char* as = nullptr, 
+                               bool overwrite = false) override;
 
     // Load a precached image texture. Returns NULL if not found.
     virtual ITexture* LoadImage(const char* path) override;
 
     // Precache a sound path.
-    virtual void PrecacheSound(const char* path) override;
+    virtual bool PrecacheSound(const char* path, 
+                               const char* as = nullptr, 
+                               bool overwrite = false) override;
 
     // Create a raw sound instance utilising a pre-existing float signed sample
     // PCM buffer for the audio data, alongside frequency and channel information.
@@ -67,6 +71,17 @@ public:
     // be alive for the entire duration of this copy! Returns NULL if the base
     // sound instance did not load successfully.
     virtual ISound* CopySound(ISound* other, bool free_after_play = true) override;
+
+    // Precache a font file.
+    virtual bool PrecacheFont(const char* path, 
+                              const char* as = nullptr, 
+                              bool overwrite = false) override;
+
+    // Precache a font file from a byte buffer.
+    virtual bool PrecacheFont(const unsigned char* buffer, 
+                              size_t length, 
+                              const char* as, 
+                              bool overwrite = false) override;
 
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) override;
@@ -98,7 +113,6 @@ public:
     IGame* game                                                     = nullptr;
     
 private:
-    
     std::unordered_map<std::string, ITexture*> precached_images_;
     std::unordered_map<std::string, ISound*> precached_sounds_;
     char error_[256];

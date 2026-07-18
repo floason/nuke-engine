@@ -28,6 +28,10 @@ public:
 
 // ITexture
 public:
+    // Get the path of the loaded texture, if applicable. This is only valid
+    // so long as the texture is alive.
+    virtual const char* GetLoadedPath() const override;
+
     // Get the size of the texture as a vector.
     virtual Vector2 GetSize() override;
 

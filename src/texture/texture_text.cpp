@@ -40,6 +40,15 @@ TextureText::~TextureText()
         delete descriptor_->interface_;
 }
 
+// Get the path of the loaded texture, if applicable. This is only valid
+// so long as the texture is alive.
+const char* TextureText::GetLoadedPath() const
+{
+    if (descriptor_->IsFontInitialized())
+        return descriptor_->font_name_.c_str();
+    return nullptr;
+}
+
 // Get the size of the texture as a vector.
 Vector2 TextureText::GetSize()
 {
@@ -61,7 +70,7 @@ Vector2 TextureText::GetSize()
 void TextureText::Draw(Vector2 origin, RenderContext& context)
 {
     TTF_Text* text = text_.get();
-    if (text != nullptr)
+    if (font_.get() != nullptr && text != nullptr)
         TTF_DrawRendererText(text, origin.x, -origin.y);
     else
     {
@@ -83,16 +92,16 @@ void TextureText::initialize()
     if (descriptor_->interface_ == nullptr)
         descriptor_->interface_ = new TextInterface(this);
 
+    // Get the font name to load. If a font name is not set, use the engine's 
+    // default font.
     std::string font_name = descriptor_->GetFont();
-    if (font_name.length() > 0)
-        font = TTF_OpenFont(font_name.c_str(), descriptor_->GetFontSize());
-    else
+    if (font_name.length() == 0)
+        font_name = "default_engine_font";
+
+    if (engine.renderer.precached_fonts_.find(font_name.c_str()) 
+        != engine.renderer.precached_fonts_.end())
     {
-        // If a font name is not set, use the engine's default font.
-        SDL_SeekIO(engine.renderer.default_font_io_stream, 0, SDL_IO_SEEK_SET);
-        font = TTF_OpenFontIO(engine.renderer.default_font_io_stream, 
-                              false,
-                              descriptor_->GetFontSize());
+        font = TTF_CopyFont(engine.renderer.precached_fonts_[font_name.c_str()]);
     }
     
     bool update_text = true;
@@ -130,6 +139,7 @@ void TextureText::initialize()
         descriptor_->SetFontInitialized();
 
         // Ensure that font-specific attributes are updated.
+        descriptor_->interface_->Update(ITextInterface::ATTRIBUTE_FONT_SIZE);
         descriptor_->interface_->Update(ITextInterface::ATTRIBUTE_FONT_STYLE);
         descriptor_->interface_->Update(ITextInterface::ATTRIBUTE_HORIZONTAL_ALIGNMENT);
     }

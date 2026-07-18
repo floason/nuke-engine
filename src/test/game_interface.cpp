@@ -54,6 +54,8 @@ bool TestGame::Init()
     engine->PrecacheImage("E:/test.png");
     engine->PrecacheSound("C:/Windows/Media/Alarm01.wav");
     engine->PrecacheSound("heavy_scram2012_falling01.mp3");
+    engine->PrecacheFont("C:/Windows/Fonts/arial.ttf");
+    engine->PrecacheFont("C:/Windows/Fonts/sserife.fon", "ms sans serif");
 
     TestEntity* test = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
     test->render_context.render_size = { 50, 50 };
@@ -209,7 +211,7 @@ bool TestGame::PerTick(bool last_per_frame)
     text.SetColor({ (uint8_t)color_r, 0, 0, 255 });
 
     if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 5)
-        text.SetFont("C:/Windows/Fonts/sserife.fon");
+        text.SetFont("ms sans serif");
     else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 8)
         text.SetFont("");
     else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 10)

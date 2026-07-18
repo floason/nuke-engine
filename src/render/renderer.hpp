@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -17,6 +19,8 @@ namespace nuke
 
 class Renderer : public IRenderer
 {
+    friend TextureText;
+
 // IRenderer
 public:
     // Start tracking a new renderable instance.
@@ -28,6 +32,12 @@ public:
 public:
     // Initialize the renderer.
     bool Init(Vector2& game_size);
+
+    // Precache a font file.
+    bool PrecacheFont(const char* path, const char* as = nullptr, bool overwrite = false);
+
+    // Precache a font file from a byte buffer.
+    bool PrecacheFont(const unsigned char* buffer, size_t length, const char* as, bool overwrite = false);
 
     // Start the renderer prior to the engine's main loop.
     void Start();
@@ -52,10 +62,12 @@ public:
     }
 
 public:
-    SDL_Renderer* sdl_renderer              = nullptr;
-    SDL_Window* sdl_window                  = nullptr;
-    TTF_TextEngine* sdl_text_engine         = nullptr;
-    SDL_IOStream* default_font_io_stream    = nullptr;
+    SDL_Renderer* sdl_renderer                                      = nullptr;
+    SDL_Window* sdl_window                                          = nullptr;
+    TTF_TextEngine* sdl_text_engine                                 = nullptr;
+
+private:
+    std::unordered_map<std::string, TTF_Font*> precached_fonts_;
 
 private:
     struct Renderable
