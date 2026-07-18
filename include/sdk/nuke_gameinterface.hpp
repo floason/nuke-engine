@@ -29,9 +29,6 @@ public:
     // Return the tickrate used for simulating physics and logic.
     virtual float GetTickRate() { return NUKE_DEFAULT_TICKRATE; }
 
-    // Return the maximum framerate used for processing the game (0 for unlimited).
-    virtual float GetFpsMax() { return 0.f; }
-
     // Called when the game interface has been attached to the engine.
     virtual void OnEngineAttach() { }
 

@@ -12,6 +12,7 @@
 #include "nuke_color.hpp"
 #include "nuke_pixelbuffer.hpp"
 #include "nuke_textdescriptor.hpp"
+#include "nuke_gamevar.hpp"
 #include "nuke_commonvars.hpp"
 #include "nuke_camera.hpp"
 #include "nuke_texture.hpp"

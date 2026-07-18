@@ -83,6 +83,15 @@ public:
                               const char* as, 
                               bool overwrite = false) override;
 
+    // Install a created base game variable so that it can be searchable.
+    virtual bool InstallGameVar(GameVarBase* var) override;
+
+    // Find a game variable by name.
+    virtual GameVar* FindGameVar(const char* name) override;
+
+    // Find a game command by name.
+    virtual GameCmd* FindGameCmd(const char* name) override;
+
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) override;
 
@@ -109,12 +118,13 @@ public:
     Renderer renderer;
     CameraContext camera_context;
     
-    MIX_Mixer* mixer                                                = nullptr;
-    IGame* game                                                     = nullptr;
+    MIX_Mixer* mixer                                                    = nullptr;
+    IGame* game                                                         = nullptr;
     
 private:
     std::unordered_map<std::string, ITexture*> precached_images_;
     std::unordered_map<std::string, ISound*> precached_sounds_;
+    std::unordered_map<std::string, GameVarBase*> precached_gamevars_;
     char error_[256];
 
     // Keep track of updatables whose methods should be dispatched at a specified
@@ -122,9 +132,12 @@ private:
     std::vector<Updatable*> updatables_;
 
     // TODO: hide by default when engine variables introduced
-    TextureText* fps_counter_                                       = nullptr;
+    TextureText* fps_counter_                                           = nullptr;
     TextDescriptor fps_counter_descriptor_;
     RenderContext fps_counter_render_context_;
+
+    GameVar fps_max_                = GameVar("fps_max", 0.f, "Framerate cap (set to 0 to disable)", 1.f);
+    GameVar max_ticks_per_frame_    = GameVar("max_ticks_per_frame", NUKE_MAX_TICKS_PER_FRAME, "", 1);
 };
 
 extern Engine engine;

@@ -10,6 +10,7 @@
 
 #include "nuke_macros.hpp"
 #include "nuke_camera.hpp"
+#include "nuke_gamevar.hpp"
 
 namespace nuke
 {
@@ -88,6 +89,15 @@ public:
                               size_t length, 
                               const char* as, 
                               bool overwrite = false) = 0;
+
+    // Install a created base game variable so that it can be searchable.
+    virtual bool InstallGameVar(GameVarBase* var) = 0;
+
+    // Find a game variable by name.
+    virtual GameVar* FindGameVar(const char* name) = 0;
+
+    // Find a game command by name.
+    virtual GameCmd* FindGameCmd(const char* name) = 0;
 
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) = 0;

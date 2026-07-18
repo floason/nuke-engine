@@ -114,6 +114,9 @@ bool Engine::Init()
     fps_counter_descriptor_.SetColor({ 127, 127, 127, 255 });
     fps_counter_descriptor_.SetFontStyleFlags(TextDescriptor::FONT_STYLE_BOLD);
 
+    InstallGameVar(&fps_max_);
+    InstallGameVar(&max_ticks_per_frame_);
+
     return true;
 }
 
@@ -191,6 +194,47 @@ bool Engine::PrecacheFont(const unsigned char* buffer, size_t length, const char
     return renderer.PrecacheFont(buffer, length, as, overwrite);
 }
 
+// Install a created base game variable so that it can be searchable.
+bool Engine::InstallGameVar(GameVarBase* var)
+{
+    if (var == nullptr)
+        return false;
+    if (precached_gamevars_.find(var->GetName()) != precached_gamevars_.end())
+        return false;
+    precached_gamevars_[var->GetName()] = var;
+    return true;
+}
+
+// Find a game variable by name.
+GameVar* Engine::FindGameVar(const char* name)
+{
+    if (precached_gamevars_.find(name) == precached_gamevars_.end())
+        return nullptr;
+
+    // Ensure that the indexed base game variable is not callable before
+    // returning it.
+    GameVarBase* gamevar = precached_gamevars_[name];
+    if (gamevar->IsCallable())
+        return nullptr;
+
+    return static_cast<GameVar*>(gamevar);
+}
+
+// Find a game command by name.
+GameCmd* Engine::FindGameCmd(const char* name)
+{
+    if (precached_gamevars_.find(name) == precached_gamevars_.end())
+        return nullptr;
+
+    // Ensure that the indexed base game variable is callable before
+    // returning it.
+    GameVarBase* gamevar = precached_gamevars_[name];
+    if (!gamevar->IsCallable())
+        return nullptr;
+
+    return static_cast<GameCmd*>(gamevar);
+}
+
 // Dispatch an updatable's invokation at a later time period.
 void Engine::DispatchUpdate(Updatable* updatable, float time_of_dispatch)
 {
@@ -250,7 +294,8 @@ bool Engine::Start()
         {
             // If the framerate is behind the constant tickrate, all tick-related
             // functions must be repeated so as to maintain the constant tickrate.
-            unsigned count = math::min((int)(frametime / game_tick_interval), NUKE_MAX_TICKS_PER_FRAME);
+            unsigned count = math::min((int)(frametime / game_tick_interval), 
+                max_ticks_per_frame_.GetInt());
             for (unsigned i = 0; i < count; i++)
             {
                 // Invoke the game interface's ::PerTick() method.
@@ -297,7 +342,7 @@ bool Engine::Start()
         // Delay the thread until the next frame if requested.
         current_tick = SDL_GetTicksNS();
         frametime = current_tick - start;
-        float game_frametime_f = game->GetFpsMax();
+        float game_frametime_f = fps_max_.GetFloat();
         if (game_frametime_f > 0.f)
         {
             uint64_t game_frametime = (uint64_t)((1.f / game_frametime_f) * NUKE_NS_PER_S);
@@ -330,6 +375,8 @@ bool Engine::Start()
 // on engine init failure.
 bool Engine::Shutdown()
 {
+    if (fps_counter_ != nullptr)
+        delete fps_counter_;
     renderer.Shutdown();
 
     for (auto& texture : precached_images_)
@@ -345,11 +392,10 @@ bool Engine::Shutdown()
 
     precached_images_.clear();
     precached_sounds_.clear();
+    precached_gamevars_.clear();
 
     if (mixer != nullptr)
         MIX_DestroyMixer(mixer);
-    if (fps_counter_ != nullptr)
-        delete fps_counter_;
     MIX_Quit();
     SDL_Quit();
     return true;
