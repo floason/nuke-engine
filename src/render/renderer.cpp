@@ -89,6 +89,14 @@ bool Renderer::Init(Vector2& game_size)
     return true;
 }
 
+// Prepare drawing the next frame.
+void Renderer::BeginFrame()
+{
+    // Clear the screen.
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 0);
+    SDL_RenderClear(sdl_renderer);
+}
+
 // Start the renderer prior to the engine's main loop.
 void Renderer::Start()
 {
@@ -105,10 +113,6 @@ void Renderer::Start()
 // Take over from the engine to draw each managed renderable.
 void Renderer::DrawFrame()
 {
-    // Clear the screen.
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 0);
-    SDL_RenderClear(sdl_renderer);
-
     // Iterate over each managed renderable.
     for (const auto& renderable : renderables_)
     {
@@ -128,8 +132,11 @@ void Renderer::DrawFrame()
                 assert(false && "Unkown texture type!");
         }
     }
+}
 
-    // Update the screen.
+// Update the renderer after drawing each desired renderable.
+void Renderer::EndFrame()
+{
     SDL_RenderPresent(sdl_renderer);
 }
 

@@ -106,6 +106,11 @@ private:
     // Keep track of updatables whose methods should be dispatched at a specified
     // time.
     std::vector<Updatable*> updatables_;
+
+    // TODO: hide by default when engine variables introduced
+    TextureText* fps_counter_                                       = nullptr;
+    TextDescriptor fps_counter_descriptor_;
+    RenderContext fps_counter_render_context_;
 };
 
 extern Engine engine;

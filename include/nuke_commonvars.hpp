@@ -18,6 +18,8 @@ struct CommonVars
     float tick_interval = 0.f;  // Constant - delta time between ticks.
     uint64_t frames     = 0;    // No. frames since engine start (starting from 0).
     uint64_t ticks      = 0;    // No. ticks since engine stat (starting from 0).
+
+    float fps           = 0.f;  // Lerped framerate calculation.
 };
 
 }   // namespace nuke

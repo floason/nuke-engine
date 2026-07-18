@@ -95,8 +95,9 @@ public:
         return font_name_;
     }
 
-    // Set the font style.
-    inline void SetFont(std::string font)
+    // Set the font style. If left blank, the engine default font
+    // will be loaded instead.
+    inline void SetFont(std::string font = "")
     {
         font_initialized_ = false;
         font_name_ = font;

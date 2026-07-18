@@ -32,8 +32,14 @@ public:
     // Start the renderer prior to the engine's main loop.
     void Start();
 
+    // Prepare drawing the next frame.
+    void BeginFrame();
+
     // Take over from the engine to draw each managed renderable.
     void DrawFrame();
+
+    // Update the renderer after drawing each desired renderable.
+    void EndFrame();
 
     // Shut down the renderer.
     void Shutdown();

@@ -1,7 +1,7 @@
 // floason (C) 2026
 // Licensed under the MIT License.
 
-// Nuke engine.
+
 
 #include <iostream>
 #include <cassert>
@@ -106,6 +106,13 @@ bool Engine::Init()
     camera_context.attenuation_offset = Vector2(size.x / 2.f, -size.y / 2.f);
     if (!game->Init())
         return false;
+
+    fps_counter_ = static_cast<TextureText*>(CreateRawTexture("texture_text", &fps_counter_descriptor_));
+    fps_counter_render_context_.origin = { 10.f, -5.f };
+    fps_counter_descriptor_.SetBuffer("fps:");
+    fps_counter_descriptor_.SetFontSize(15.f);
+    fps_counter_descriptor_.SetColor({ 127, 127, 127, 255 });
+    fps_counter_descriptor_.SetFontStyleFlags(TextDescriptor::FONT_STYLE_BOLD);
 
     return true;
 }
@@ -254,7 +261,16 @@ bool Engine::Start()
             break;
 
         // Interface with the renderer.
+        renderer.BeginFrame();
         renderer.DrawFrame();
+
+        // Render the FPS counter after the rendering stage so as to draw it on top
+        // of everything else.
+        fps_counter_descriptor_.SetBuffer(std::string("fps: ") + std::to_string((int)vars.fps));
+        fps_counter_->Draw(fps_counter_render_context_.origin, fps_counter_render_context_);
+
+        // Update the screen.
+        renderer.EndFrame();
 
         // Delay the thread until the next frame if requested.
         current_tick = SDL_GetTicksNS();
@@ -273,6 +289,13 @@ bool Engine::Start()
         vars.frametime = ((float)frametime / NUKE_NS_PER_S);
         vars.realtime += vars.frametime;
         vars.frames++;
+        
+        // Calculate the smoothed displayable framerate variable.
+        if (vars.frametime > 0.f)
+        {
+            float t = 1.f - std::expf(-vars.frametime);
+            vars.fps = nuke::math::lerp(vars.fps, 1.f / vars.frametime, t);
+        }
 
         // Set the start timestamp for the next interval.
         start = current_tick;
@@ -287,6 +310,8 @@ bool Engine::Shutdown()
 {
     if (mixer != nullptr)
         MIX_DestroyMixer(mixer);
+    if (fps_counter_ != nullptr)
+        delete fps_counter_;
     renderer.Shutdown();
     MIX_Quit();
     SDL_Quit();
