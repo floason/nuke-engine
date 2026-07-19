@@ -8,12 +8,12 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
 #include "texture.hpp"
 #include "event.hpp"
 #include "renderer.hpp"
+#include "soundapi.hpp"
 
 namespace nuke
 {
@@ -133,9 +133,8 @@ public:
 
 public:
     Renderer renderer;
+    SoundAPI sound;
     CameraContext camera_context;
-    
-    MIX_Mixer* mixer                                                    = nullptr;
     IGame* game                                                         = nullptr;
     
 private:

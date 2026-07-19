@@ -9,9 +9,10 @@ endif()
 
 add_subdirectory(texture)
 add_subdirectory(render)
+add_subdirectory(sound)
 
-add_library(nuke ${NUKE_SHARED} engine.cpp sound.cpp event.cpp)
-target_link_libraries(nuke PRIVATE nuke_interface nuke_texture nuke_render SDL3::SDL3 
+add_library(nuke ${NUKE_SHARED} engine.cpp event.cpp)
+target_link_libraries(nuke PRIVATE nuke_interface nuke_texture nuke_render nuke_sound SDL3::SDL3 
     SDL3_image::SDL3_image SDL3_mixer::SDL3_mixer SDL3_ttf::SDL3_ttf)
 target_include_directories(nuke 
     PUBLIC  "${PROJECT_BINARY_DIR}/configured"

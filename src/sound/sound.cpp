@@ -10,6 +10,7 @@
 #include "nuke.hpp"
 #include "engine.hpp"
 #include "sound.hpp"
+#include "soundapi.hpp"
 
 namespace nuke
 {
@@ -26,7 +27,7 @@ Sound::Sound(const char* path) :
     track_(nullptr, MIX_DestroyTrack)
 {
     SDL_AudioSpec spec;
-    audio_ = MIX_LoadAudio(engine.mixer, path, false);
+    audio_ = MIX_LoadAudio(engine.sound.mixer_, path, false);
     if (audio_ == nullptr)
         goto fail_audio;
 
@@ -59,7 +60,7 @@ Sound::Sound(const void* data, size_t len, int channels, int frequency) :
     frequency_(frequency)
 {
     SDL_AudioSpec spec = { SDL_AUDIO_F32, channels, frequency };
-    audio_ = MIX_LoadRawAudioNoCopy(engine.mixer,
+    audio_ = MIX_LoadRawAudioNoCopy(engine.sound.mixer_,
                                     data,
                                     len,
                                     &spec,
@@ -286,7 +287,7 @@ bool Sound::createTrack()
     if (!loaded_)
         return false;
 
-    MIX_Track* track = MIX_CreateTrack(engine.mixer);
+    MIX_Track* track = MIX_CreateTrack(engine.sound.mixer_);
     if (track == nullptr)
         return false;
 

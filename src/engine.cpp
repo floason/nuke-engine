@@ -10,11 +10,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <SDL3/SDL.h>
-#include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
 #include "engine.hpp"
-#include "sound.hpp"
+#include "soundapi.hpp"
 #include "event.hpp"
 #include "renderer.hpp"
 #include "texture.hpp"
@@ -101,10 +100,7 @@ bool Engine::Init(int argc, char** argv)
     if (!renderer.Init(size))
         return false;
 
-    if (!MIX_Init())
-        return false;
-
-    if ((mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr)) == nullptr)
+    if (!sound.Init())
         return false;
 
     camera_context.attenuation_offset = Vector2(size.x / 2.f, -size.y / 2.f);
@@ -497,7 +493,9 @@ bool Engine::Shutdown()
 {
     if (fps_counter_ != nullptr)
         delete fps_counter_;
+
     renderer.Shutdown();
+    sound.Shutdown();
 
     for (auto& texture : precached_images_)
     {
@@ -515,9 +513,6 @@ bool Engine::Shutdown()
     precached_gamevars_.clear();
     event_manager_.clear();
 
-    if (mixer != nullptr)
-        MIX_DestroyMixer(mixer);
-    MIX_Quit();
     SDL_Quit();
     return true;
 }
