@@ -307,8 +307,27 @@ void Engine::FireEvent(IEvent* event)
     const char* name = event->GetName();
     if (event_manager_.find(name) != event_manager_.end())
     {
-        for (auto& listener : event_manager_[name])
-            listener->OnSignalEvent(event);
+        auto& listeners = event_manager_[name];
+        for (auto& slot : listeners)
+        {
+            if (!slot.remove)
+                slot.listener->OnSignalEvent(event);
+        }
+
+        // Clean up any disused listeners.
+        int i = 0;
+        size_t size = listeners.size();
+        while (i < size)
+        {
+            if (listeners[i].remove)
+            {
+                listeners[i] = std::move(listeners.back());
+                listeners.pop_back();
+                size--;
+            }
+            else
+                i++;
+        }
     }
 
     delete event;
@@ -318,9 +337,19 @@ void Engine::FireEvent(IEvent* event)
 void Engine::AddEventListener(IEventListener* listener, const char* name)
 {
     if (event_manager_.find(name) == event_manager_.end())
-        event_manager_[name] = std::unordered_set<IEventListener*>();
-    if (event_manager_[name].find(listener) == event_manager_[name].end())
-        event_manager_[name].insert(listener);
+        event_manager_[name] = std::vector<EventListenerSlot>();
+
+    bool already_added = false;
+    for (auto& found : event_manager_[name])
+    {
+        if (found.listener == listener)
+        {
+            already_added = true;
+            break;
+        }
+    }
+    if (!already_added)
+        event_manager_[name].emplace_back(listener, false);
 }
 
 // Remove an event listener.
@@ -332,8 +361,14 @@ bool Engine::RemoveEventListener(IEventListener* listener, const char* name)
     {
         for (auto& listeners : event_manager_)
         {
-            if (listeners.second.find(listener) != listeners.second.end())
-                listeners.second.erase(listener);
+            for (auto& found : listeners.second)
+            {
+                if (found.listener == listener)
+                {
+                    found.remove = true;
+                    break;
+                }
+            }
         }
         return true;
     }
@@ -341,11 +376,15 @@ bool Engine::RemoveEventListener(IEventListener* listener, const char* name)
     if (event_manager_.find(name) == event_manager_.end())
         return false;
 
-    if (event_manager_[name].find(listener) == event_manager_[name].end())
-        return false;
-
-    event_manager_[name].erase(listener);
-    return true;
+    for (auto& found : event_manager_[name])
+    {
+        if (found.listener == listener)
+        {
+            found.remove = true;
+            return true;
+        }
+    }
+    return false;
 }
 
 // Dispatch an updatable's invokation at a later time period.
@@ -421,6 +460,7 @@ bool Engine::Start()
                 // processed now.
                 std::vector<Updatable*> to_traverse;
                 to_traverse.swap(updatables_);
+                updatables_.reserve(to_traverse.size());
                 for (int obj_i = 0, size = to_traverse.size(); obj_i < size; obj_i++)
                 {
                     Updatable* updatable = to_traverse[obj_i];
