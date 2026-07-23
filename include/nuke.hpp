@@ -18,6 +18,7 @@
 #include "nuke_texture.hpp"
 #include "nuke_sound.hpp"
 #include "nuke_event.hpp"
+#include "nuke_netcode.hpp"
 #include "nuke_engine.hpp"
 #include "nuke_renderer.hpp"
 

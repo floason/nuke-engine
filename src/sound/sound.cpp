@@ -177,6 +177,10 @@ void Sound::SetPlaybackSpeed(float speed)
 // Play the sound.
 bool Sound::Play(bool loop, bool resume, float fade_in)
 {
+    // Refuse to play if engine audio output is disabled.
+    if (!engine.output_enabled)
+        return false;
+    
     if (!loaded_)
         return false;
 

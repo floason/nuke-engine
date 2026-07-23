@@ -30,6 +30,9 @@ if (SDL3_TYPE STREQUAL "SHARED_LIBRARY")
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3_ttf::SDL3_ttf>
             $<TARGET_FILE_DIR:nuke_test>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3_net::SDL3_net>
+            $<TARGET_FILE_DIR:nuke_test>
         COMMENT "Copying SDL3 shared libraries to build directory."
     )
 endif()

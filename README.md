@@ -7,10 +7,14 @@ A future SDK will be created for this engine, which will be designed to be forke
 ### Configuration
 When configuring Nuke with CMake before building, the following options are available:
 - `NUKE_USE_VENDORED_SDL3` (default: OFF) - add SDL3 as a subdirectory from submodules/SDL instead of using FindSDL.
-- - If this option is disabled, by default FindSDL and FindSDL_mixer will search for your devel libraries in external/SDL3/cmake and external/SDL3_image/cmake respectively, alongside any system install paths. This can be changed by modifying `SDL3_DIR` and `SDL3_image_DIR` respectively.
+- - If this option is disabled, by default the FindSDL_* scripts will search for your devel libraries in external/SDL3/cmake for SDL3 and external/SDL3_*/cmake for each of the following SDL3-adjacent libraries:
+- - - SDL3_image
+- - - SDL3_mixer
+- - - SDL3_ttf
+- - - SDL3_net
 - `NUKE_BUILD_TEST` (default: OFF) - builds the test executable for directly interfacing with the Nuke engine library.
 - `NUKE_BUILD_SHARED` (default: ON) - this dictates whether Nuke specifically (rather than all targets via `BUILD_SHARED_LIBS`) is built as a static or shared library. Note that when compiled as a static library, the whole archive should be linked. See [CMake's generator expression for linking an entire static library](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#genex:LINK_LIBRARY) via the `WHOLE_ARCHIVE` linker feature.
-- `NUKE_LINK_SDL3_STATIC` (default: OFF) - due to the complexities involved with building SDL3 and SDL3_image statically, it is recommended that this option is toggled instead for linking SDL3/SDL3_image as static libraries.
+- `NUKE_LINK_SDL3_STATIC` (default: OFF) - due to the complexities involved with building SDL3 and its adjacent libraries statically, it is recommended that this option is toggled instead for static SDL3 linking.
 
 ### Building
 This repository uses CMake 3.24 and up for building. Both single- and multi-config generators are supported.
@@ -20,6 +24,7 @@ This repository uses CMake 3.24 and up for building. Both single- and multi-conf
 - [SDL3_image](https://github.com/libsdl-org/SDL_image)
 - [SDL3_mixer](https://github.com/libsdl-org/SDL_mixer)
 - [SDL3_ttf](https://github.com/libsdl-org/SDL_ttf)
+- [SDL3_net](https://github.com/libsdl-org/SDL_net)
 
 ### Credits
 Some of the design philosophy is inspired by [Valve's Source game engine and its respective SDK](https://github.com/valvesoftware/source-sdk-2013).

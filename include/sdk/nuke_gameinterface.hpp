@@ -17,9 +17,19 @@ class IEngine;
 class IGame
 {
 public:
-    // Get a reference to the game's common variables struct.
-    virtual CommonVars& GetCommonVars() = 0;
+    enum GameEvent
+    {
+        // Sent when a networked client makes a successful connection.
+        EVENT_CLIENT_SUCCESS,
 
+        // Sent when a networked client fails to make a successful connection.
+        EVENT_CLIENT_FAILED,
+
+        // Sent when a networked client closes its connection.
+        EVENT_CLIENT_CLOSED
+    };
+
+public:
     // Get the name of the game.
     virtual const char* GetName() = 0;
 
@@ -36,14 +46,25 @@ public:
     // game interface.
     virtual bool Init() { return true; }
 
-    // Per-frame method which is invoked by the engine after starting.
+    // Called once when the engine starts.
+    virtual bool Start() { return true; }
+
+    // Per-frame method which is invoked by the engine after starting. It is
+    // recommended that game logic is placed in the ::PerTick() method instead.
     virtual bool PerFrame() { return true; }
 
     // Per-tick method which is invoked by the engine after starting.
     virtual bool PerTick(bool last_per_frame) { return true; }
 
+    // Invoked by the engine when a specific game event is signalled. This
+    // is separate to the IEvent interface.
+    virtual void OnGameEvent(GameEvent event) { }
+
     // Called when the process exits.
     virtual bool Exit(bool window_closed) { return true; }
+
+public:
+    CommonVars commonvars;
 };
 
 }   // namespace nuke

@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
     engine->SetGameInterface(game);
     engine->PrintVersion();
-    if (!engine->Init(argc - 1, &argv[1])) // The first parameter is always the loaded binary path.
+    if (!engine->Init(argc - 1, &argv[1])) // The first parameter is reserved.
         return engine_failed();
     if (!engine->Start())
         return engine_failed();

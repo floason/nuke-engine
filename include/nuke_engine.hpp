@@ -20,6 +20,8 @@ class IRenderer;
 class IGame;
 class ITexture;
 class ISound;
+class INetcodeClient;
+class INetcodeServer;
 class Updatable;
 
 class IEngine
@@ -48,8 +50,10 @@ public:
     virtual void SetGameInterface(IGame* game) = 0;
 
     // Initialize the engine. Command-line arguments may be passed to this method
-    // so as to parse any game variable modifications. The first argument must be
-    // after the program name argument!
+    // so as to parse any game variable modifications. If passing into argv
+    // straight from int main(), the first argument should not be the binary path.
+    // 
+    // TODO: move command-line argument parsing into SDK code?
     virtual bool Init(int argc = 0, char** argv = nullptr) = 0;
 
     // Precache an image texture.
@@ -118,10 +122,35 @@ public:
     // Dispatch an updatable's invokation at a later time period.
     virtual void DispatchUpdate(Updatable* updatable, float time_of_dispatch = 0.f) = 0;
 
+    // Instantiate a networked client connection. This returns a client interface
+    // on success. This method does not block beyond resolving the hostname and 
+    // whether the server successfully reads the client's connection attempt must 
+    // be checked later through the returned client interface, or via the game's
+    // ::OnGameEvent() method. The returned client  instance must always be closed 
+    // regardless of outcome when finished.
+    virtual INetcodeClient* ConnectClient(const char* hostname, 
+                                          uint16_t port, 
+                                          int attempts = 4, 
+                                          float wait = 6) = 0;
+
+    // Close the client instance.
+    virtual bool CloseClient() = 0;
+
+    // Launch a networked server instance. This returns a server interface on
+    // success. The returned server instance must always be closed regardless of 
+    // outcome when finished.
+    virtual INetcodeServer* StartServer(bool localhost = false) = 0;
+
+    // Close the server instance.
+    virtual bool CloseServer() = 0;
+
     // Start the engine and call into the game interface. This should be called only
     // after initialising the engine. This must be called from the main thread. This
     // method will block.
-    virtual bool Start() = 0;
+    virtual bool Start(bool output_enabled = true) = 0;
+
+    // Is visual/audio output enabled?
+    virtual bool OutputEnabled() = 0;
 
     // Shut down the engine. This should be called on process exit, including
     // on engine init failure.

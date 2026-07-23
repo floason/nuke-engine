@@ -17,6 +17,7 @@
 #include "event.hpp"
 #include "renderer.hpp"
 #include "texture.hpp"
+#include "netapi.hpp"
 
 namespace nuke
 {
@@ -86,7 +87,10 @@ void Engine::SetGameInterface(IGame* game)
 }
 
 // Initialize the engine. Command-line arguments may be passed to this method
-// so as to modify any game variables or 
+// so as to parse any game variable modifications. If passing into argv
+// straight from int main(), the first argument should not be the binary path.
+// 
+// TODO: move command-line argument parsing into SDK code?
 bool Engine::Init(int argc, char** argv)
 {
     if (game == nullptr)
@@ -95,34 +99,19 @@ bool Engine::Init(int argc, char** argv)
             "engine!");
         return false;
     }
-
-    Vector2 size = engine.game->GetSize();
-    if (!renderer.Init(size))
-        return false;
-
-    if (!sound.Init())
-        return false;
-
-    camera_context.attenuation_offset = Vector2(size.x / 2.f, -size.y / 2.f);
-    if (!game->Init())
-        return false;
-
-    fps_counter_ = static_cast<TextureText*>(CreateRawTexture("texture_text", &fps_counter_descriptor_));
-    fps_counter_render_context_.origin = { 10.f, -5.f };
-    fps_counter_descriptor_.SetBuffer("fps:");
-    fps_counter_descriptor_.SetFontSize(15.f);
-    fps_counter_descriptor_.SetColor({ 127, 127, 127, 255 });
-    fps_counter_descriptor_.SetFontStyleFlags(TextDescriptor::FONT_STYLE_BOLD);
-
+    
     InstallGameVar(&fps_max_);
     InstallGameVar(&max_ticks_per_frame_);
-    InstallGameVar(&show_fps);
+    InstallGameVar(&show_fps_);
+    
+    InstallGameVar(&s_listen_port);
+    InstallGameVar(&s_max_clients);
 
     // If any command-line arguments (from argv[1] onwards) were provided,
     // these should be parsed so as to allow for the modification of game
     // variables.
     //
-    // Syntax: --gvar1 value1 --gvar2 value2 ...
+    // Syntax: +gvar1 value1 +gvar2 value2 ...
     GameVar* variable = nullptr;
     for (int i = 0; i < argc; i++)
     {
@@ -134,9 +123,9 @@ bool Engine::Init(int argc, char** argv)
         // modified.
         if (variable == nullptr)
         {
-            if (std::strlen(argv[i]) <= 2
-                || std::strncmp(argv[i], "--", 2) != 0 
-                || (variable = FindGameVar(&argv[i][2])) == nullptr
+            if (std::strlen(argv[i]) <= 1
+                || argv[i][0] != '+'
+                || (variable = FindGameVar(&argv[i][1])) == nullptr
                 || variable->GetFlags() & GameVarBase::FLAG_HIDDEN)
             {
                 std::cout << "Invalid variable name: " << argv[i] << std::endl;
@@ -172,6 +161,27 @@ bool Engine::Init(int argc, char** argv)
         std::cout << "Missing value while attempting to modify game variable: " << variable->GetName() <<
                      std::endl;
     }
+
+    Vector2 size = engine.game->GetSize();
+    if (!renderer.Init(size))
+        return false;
+
+    if (!sound.Init())
+        return false;
+
+    if (!net.Init())
+        return false;
+
+    camera_context.attenuation_offset = Vector2(size.x / 2.f, -size.y / 2.f);
+    if (!game->Init())
+        return false;
+
+    fps_counter_ = static_cast<TextureText*>(CreateRawTexture("texture_text", &fps_counter_descriptor_));
+    fps_counter_render_context_.origin = { 10.f, -5.f };
+    fps_counter_descriptor_.SetBuffer("fps:");
+    fps_counter_descriptor_.SetFontSize(15.f);
+    fps_counter_descriptor_.SetColor({ 127, 127, 127, 255 });
+    fps_counter_descriptor_.SetFontStyleFlags(TextDescriptor::FONT_STYLE_BOLD);
 
     return true;
 }
@@ -396,11 +406,82 @@ void Engine::DispatchUpdate(Updatable* updatable, float time_of_dispatch)
     updatables_.push_back(updatable);
 }
 
+// Instantiate a networked client connection. This returns a client interface
+// on success. This method does not block beyond resolving the hostname and 
+// whether the server successfully reads the client's connection attempt must 
+// be checked later through the returned client interface, or via the game's
+// ::OnGameEvent() method. The returned client  instance must always be closed 
+// regardless of outcome when finished.
+INetcodeClient* Engine::ConnectClient(const char* hostname, 
+                                      uint16_t port, 
+                                      int attempts, 
+                                      float wait)
+{
+    if (engine.net.client != nullptr)
+        return nullptr;
+
+    // Attempt to create the client instance and connect it to a server 
+    // first before returning it.
+    engine.net.client = new NetcodeClient();
+    if (!engine.net.client->Connect(hostname, port, attempts, wait))
+    {
+        delete engine.net.client;
+        engine.net.client = nullptr;
+    }
+
+    return engine.net.client;
+}
+
+// Close the client instance.
+bool Engine::CloseClient()
+{
+    if (engine.net.client == nullptr)
+        return false;
+    
+    engine.net.client->Close();
+    delete engine.net.client;
+    engine.net.client = nullptr;
+    return true;
+}
+
+// Launch a networked server instance. This returns a server interface on
+// success. The returned server instance must always be closed regardless of 
+// outcome when finished.
+INetcodeServer* Engine::StartServer(bool localhost)
+{
+    if (engine.net.server != nullptr)
+        return nullptr;
+
+    // Attempt to launch the server instance before returning it.
+    engine.net.server = new NetcodeServer();
+    if (!engine.net.server->Start(localhost))
+    {
+        delete engine.net.server;
+        engine.net.server = nullptr;
+    }
+
+    return engine.net.server;
+}
+
+// Close the server instance.
+bool Engine::CloseServer()
+{
+    if (engine.net.server == nullptr)
+        return false;
+    
+    engine.net.server->Shutdown();
+    delete engine.net.server;
+    engine.net.server = nullptr;
+    return true;
+}
+
 // Start the engine and call into the game interface. This should be called only
 // after initialising the engine. This must be called from the main thread. This
 // method will block.
-bool Engine::Start()
+bool Engine::Start(bool output_enabled)
 {
+    this->output_enabled = output_enabled;
+
     if (game == nullptr)
     {
         SetErrorBuffer("Please call Engine::SetGameInterface() to link your game instance to the "      \
@@ -408,20 +489,23 @@ bool Engine::Start()
         return false;
     }
 
-    CommonVars& vars = game->GetCommonVars();
-    vars.tick_interval = 1.f / game->GetTickRate();
-    if (vars.tick_interval <= 0.f)
+    game->commonvars.tick_interval = 1.f / game->GetTickRate();
+    if (game->commonvars.tick_interval <= 0.f)
     {
         SetErrorBuffer("Game tickrate must be > 0!");
         return false;
     }
 
-    renderer.Start();
+    if (output_enabled)
+        renderer.Start();
+
+    if (!game->Start())
+        return false;
 
     // After successful initialisation, the main loop is invoked, which blocks
     // until the window is exited.
     uint64_t last_tick_timestamp = SDL_GetTicksNS();
-    uint64_t game_tick_interval = (uint64_t)(vars.tick_interval * NUKE_NS_PER_S);
+    uint64_t game_tick_interval = (uint64_t)(game->commonvars.tick_interval * NUKE_NS_PER_S);
     uint64_t start = SDL_GetTicksNS();
     for (;;)
     {
@@ -452,7 +536,15 @@ bool Engine::Start()
             {
                 // Invoke the game interface's ::PerTick() method.
                 if (!game->PerTick(i + 1 == count))
-                    break;
+                    goto fail;
+
+                // If a server is running, run the server's ::PerFrame() method.
+                if (engine.net.server != nullptr && !engine.net.server->PerTick(i + 1 == count))
+                    goto fail;
+
+                // If a client is running, run the client's ::PerFrame() method.
+                if (engine.net.client != nullptr && !engine.net.client->PerTick(i + 1 == count))
+                    goto fail;
 
                 // Iterate through each updatable and dispatch their set update
                 // functions when desired. It is possible that an updatable may
@@ -464,14 +556,14 @@ bool Engine::Start()
                 for (int obj_i = 0, size = to_traverse.size(); obj_i < size; obj_i++)
                 {
                     Updatable* updatable = to_traverse[obj_i];
-                    if (vars.curtime >= updatable->time_of_dispatch)
+                    if (game->commonvars.curtime >= updatable->time_of_dispatch)
                         updatable->Update();
                     else
                         updatables_.push_back(updatable);
                 }
                 
-                vars.ticks++;
-                vars.curtime += vars.tick_interval;
+                game->commonvars.ticks++;
+                game->commonvars.curtime += game->commonvars.tick_interval;
             }
             last_tick_timestamp += game_tick_interval * count;
         }
@@ -480,20 +572,33 @@ bool Engine::Start()
         if (!game->PerFrame())
             break;
 
-        // Interface with the renderer.
-        renderer.BeginFrame();
-        renderer.DrawFrame();
+        // If a server is running, run the server's ::PerFrame() method.
+        if (engine.net.server != nullptr && !engine.net.server->PerFrame())
+            break;
 
-        // Render the FPS counter after the rendering stage so as to draw it on top
-        // of everything else.
-        if (show_fps.GetInt())
+        // If a client is running, run the client's ::PerFrame() method.
+        if (engine.net.client != nullptr && !engine.net.client->PerFrame())
+            break;
+
+        // Only interface with the engine renderer if running as a client.
+        else
         {
-            fps_counter_descriptor_.SetBuffer(std::string("fps: ") + std::to_string((int)vars.fps));
-            fps_counter_->Draw(fps_counter_render_context_.origin, fps_counter_render_context_);
-        }
+            // Interface with the renderer.
+            renderer.BeginFrame();
+            renderer.DrawFrame();
 
-        // Update the screen.
-        renderer.EndFrame();
+            // Render the FPS counter after the rendering stage so as to draw it on top
+            // of everything else.
+            if (show_fps_.GetInt())
+            {
+                fps_counter_descriptor_.SetBuffer(std::string("fps: ") 
+                                                  + std::to_string((int)game->commonvars.fps));
+                fps_counter_->Draw(fps_counter_render_context_.origin, fps_counter_render_context_);
+            }
+
+            // Update the screen.
+            renderer.EndFrame();
+        }
 
         // Delay the thread until the next frame if requested.
         current_tick = SDL_GetTicksNS();
@@ -509,22 +614,31 @@ bool Engine::Start()
         // Update frame-specific common variables information.
         current_tick = SDL_GetTicksNS();
         frametime = current_tick - start;
-        vars.frametime = ((float)frametime / NUKE_NS_PER_S);
-        vars.realtime += vars.frametime;
-        vars.frames++;
+        game->commonvars.frametime = ((float)frametime / NUKE_NS_PER_S);
+        game->commonvars.realtime += game->commonvars.frametime;
+        game->commonvars.frames++;
         
         // Calculate the smoothed displayable framerate variable.
-        if (vars.frametime > 0.f)
+        if (game->commonvars.frametime > 0.f)
         {
-            float t = 1.f - std::expf(-vars.frametime);
-            vars.fps = nuke::math::lerp(vars.fps, 1.f / vars.frametime, t);
+            float t = 1.f - std::expf(-game->commonvars.frametime);
+            game->commonvars.fps = nuke::math::lerp(game->commonvars.fps, 
+                                                    1.f / game->commonvars.frametime, 
+                                                    t);
         }
 
         // Set the start timestamp for the next interval.
         start = current_tick;
     }
 
+fail:
     return false;
+}
+
+// Is visual/audio output enabled?
+bool Engine::OutputEnabled()
+{
+    return output_enabled;
 }
 
 // Shut down the engine. This should be called on process exit, including
@@ -536,6 +650,10 @@ bool Engine::Shutdown()
 
     renderer.Shutdown();
     sound.Shutdown();
+    net.Shutdown();
+
+    CloseServer();
+    CloseClient();
 
     for (auto& texture : precached_images_)
     {

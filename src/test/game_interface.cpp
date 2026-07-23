@@ -10,6 +10,8 @@
 
 nuke::IEngine* engine;
 nuke::IRenderer* renderer;
+nuke::INetcodeClient* client;
+nuke::INetcodeServer* server;
 nuke::CameraContext* camera;
 
 static TestGame game_ = TestGame();
@@ -53,12 +55,6 @@ public:
 };
 
 static TestEventListener* listener;
-
-// Get a reference to the game's common variables struct.
-nuke::CommonVars& TestGame::GetCommonVars()
-{
-    return commonvars;
-}
 
 // Get the name of the game.
 const char* TestGame::GetName()
@@ -141,12 +137,6 @@ bool TestGame::Init()
     test7->collision.origin = { 50, -50 }; // You can change horizontal/vertical alignment using mins/maxs.
     test7->AdjustRenderOrigin();
 
-    nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
-    sound->Play(true);
-    sound->SetPlaybackSpeed(1.02);
-    sound->SetParentEntity(test4);
-    sound->SetMaxDistance(2000);
-
     // test
     delete engine->CreateRawTexture("texture_test", 3, "hi");
 
@@ -155,7 +145,26 @@ bool TestGame::Init()
     return true;
 }
 
-// Per-frame method which is invoked by the engine after starting.
+// Called once when the engine starts.
+bool TestGame::Start()
+{
+    nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
+    sound->Play(true);
+    sound->SetPlaybackSpeed(1.02);
+    sound->SetParentEntity(test4);
+    sound->SetMaxDistance(2000);
+
+    // preliminary networking test
+    if ((server = engine->StartServer(true)) == nullptr)
+        return false;
+    if ((client = engine->ConnectClient("localhost", 32775)) == nullptr)
+        return false;
+
+    return true;
+}
+
+// Per-frame method which is invoked by the engine after starting. It is
+// recommended that game logic is placed in the ::PerTick() method instead.
 bool TestGame::PerFrame()
 {
     if (commonvars.realtime > 15)
@@ -268,6 +277,27 @@ bool TestGame::PerTick(bool last_per_frame)
     }
 
     return true;
+}
+
+// Invoked by the engine when a specific game event is signalled. This
+// is separate to the IEvent interface.
+void TestGame::OnGameEvent(GameEvent event)
+{
+    switch (event)
+    {
+        case EVENT_CLIENT_SUCCESS:
+            std::cout << "successful connection!" << std::endl;
+            break;
+        case EVENT_CLIENT_FAILED:
+            std::cout << "client connection failed!" << std::endl;
+            break;
+        case EVENT_CLIENT_CLOSED:
+            std::cout << "client connection closed!" << std::endl;
+            break;
+        default:
+            std::cerr << "unknown event " << event << "?" << std::endl;
+            break;
+    }
 }
 
 // Called when the process exits.
