@@ -10,27 +10,42 @@
 // TODO: use std::vector<T> for final sdk due to cache locality
 using entity_list = std::forward_list<nuke::IEntity*>;
 
+class TestEntity;
+
 class TestEntityManager
 {
 public:
     // Create a new entity by classname.
-    nuke::IEntity* CreateEntity(const char* name);
+    TestEntity* CreateEntity(const char* name);
 
 private:
     entity_list entities_;
 };
 
-class TestEntity : public nuke::IEntity, public nuke::IRenderable, public nuke::ICollideable
+class TestCollideable : public nuke::ICollideable
 {
-    friend TestEntityManager;
+public:
+    // Signal the deletion of this collideable.
+    virtual ~TestCollideable();
+
+// nuke::ICollideable
+public:
+    // Get a reference to the collideable's physics context struct.
+    virtual nuke::PhysicsContext& GetPhysicsContext() override;
 
 public:
-    // Set entity default properties.
-    TestEntity();
+    nuke::PhysicsContext context;
+};
 
-    // Remove this entity from the renderer's list and delete its texture,
-    // if owned.
-    virtual ~TestEntity() override;
+class TestRenderable : public nuke::IRenderable
+{
+public:
+    // Add this renderable to the renderable list.
+    TestRenderable();
+
+    // Remove this renderable from the renderer's list and delete its 
+    // texture, if owned.
+    virtual ~TestRenderable();
 
 // nuke::IRenderable
 public:
@@ -46,11 +61,27 @@ public:
     // Get a reference to the renderable's handle.
     virtual nuke::RenderHandle& GetRenderHandle() override;
 
-// nuke::ICollideable
 public:
-    // Get a reference to the collideable's physics context struct.
-    nuke::PhysicsContext& GetPhysicsContext() override;
+    // Does the renderable own its texture?
+    inline bool IsTextureOwned()
+    {
+        return owns_texture_;
+    }
 
+public:
+    nuke::RenderContext context;
+
+private:
+    nuke::RenderHandle render_handle_   = nuke::InvalidRenderHandle;
+    bool owns_texture_                  = false;
+};
+
+class TestEntity : public nuke::IEntity
+{
+public:
+    // Set entity default properties.
+    TestEntity();
+    
 public:
     // Set the entity's texture.
     void SetTexture(nuke::ITexture* texture, bool set_bounds = true);
@@ -62,10 +93,6 @@ public:
     void AdjustRenderOrigin();
 
 public:
-    nuke::PhysicsContext collision;
-    nuke::RenderContext render_context;
-
-private:
-    nuke::RenderHandle render_handle_   = nuke::InvalidRenderHandle;
-    bool owns_texture_                  = false;
+    TestCollideable collision;
+    TestRenderable render;
 };

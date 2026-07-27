@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <climits>
 #include <SDL3_net/SDL_net.h>
 
 #include "nuke.hpp"
@@ -53,7 +54,7 @@ public:
 private:
     NET_DatagramSocket* local_socket_   = nullptr;
     NET_Address* host_address_          = nullptr;
-    uint16_t host_port_                 = UINT_MAX;
+    uint16_t host_port_                 = UINT16_MAX;
 
     // Used during connection validation.
     float last_conn_packet_timestamp_   = 0.f;

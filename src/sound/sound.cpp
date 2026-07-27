@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <cmath>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "nuke.hpp"
@@ -227,11 +228,11 @@ void Sound::DestroyOnFinish()
     MIX_SetTrackStoppedCallback(track_.get(), &destroy_audio_on_finish, this);
 }
 
-// Set a parent entity if this sound instance should be played from a
-// given entity, rather than it be a global sound. Because the entity
-// assumes ownership of this sound instance, this sound will be
-// destroyed upon entity deletion.
-void Sound::SetParentEntity(ICollideable* collideable)
+// Set a parent collideable if this sound instance should be played from a
+// given collideable, rather than it be a global sound. Because the 
+// collideable assumes ownership of this sound instance, this sound will be
+// destroyed upon collideable deletion.
+void Sound::SetParentCollideable(ICollideable* collideable)
 {
     if (!loaded_)
         return;
@@ -282,7 +283,7 @@ void Sound::OnSignalEvent(IEvent* event)
     // If the physics context of the collideable is aggregated to this
     // sound instance, it must be immediately decoupled.
     if (event->GetPointer("physics_context") == static_cast<void*>(parent_))
-        SetParentEntity(nullptr);
+        SetParentCollideable(nullptr);
 }
 
 // Create a new track after creating a MIX_Audio* instance.
@@ -320,7 +321,7 @@ void Sound::adjustAudioAttenuation()
 
     // Pan the audio between stereo speakers using the normalised vector.
     float angle = (normalized.x + 1.f) * nuke::math::pi::f * 0.25f;
-    MIX_StereoGains gains = { std::cosf(angle), std::sinf(angle) };
+    MIX_StereoGains gains = { std::cos(angle), std::sin(angle) };
     MIX_SetTrackStereo(track_.get(), &gains);
 
     // Calculate the playback speed multiplier of the audio based on its

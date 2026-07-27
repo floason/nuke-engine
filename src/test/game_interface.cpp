@@ -79,62 +79,62 @@ bool TestGame::Init()
     engine->PrecacheFont("C:/Windows/Fonts/arial.ttf");
     engine->PrecacheFont("C:/Windows/Fonts/sserife.fon", "ms sans serif");
 
-    TestEntity* test = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test->render_context.render_size = { 50, 50 };
-    test->collision.origin = { 100, -50 };
+    TestEntity* test = entity_manager->CreateEntity("test_entity");
+    test->render.context.render_size = { 50, 50 };
+    test->collision.context.origin = { 100, -50 };
     test->AdjustRenderOrigin();
 
-    TestEntity* test2 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test2->render_context.render_size = { 50, 50 };
-    test2->render_context.color = { 0, 255, 0, 127 };
-    test2->collision.origin = { 175, -125 };
+    TestEntity* test2 = entity_manager->CreateEntity("test_entity");
+    test2->render.context.render_size = { 50, 50 };
+    test2->render.context.color = { 0, 255, 0, 127 };
+    test2->collision.context.origin = { 175, -125 };
     test2->AdjustRenderOrigin();
 
-    TestEntity* test3 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    test3->render_context.render_size = { 50, 50 };
-    test3->render_context.color = { 255, 0, 0, 127 };
-    test3->collision.origin = { 150, -100 };
+    TestEntity* test3 = entity_manager->CreateEntity("test_entity");
+    test3->render.context.render_size = { 50, 50 };
+    test3->render.context.color = { 255, 0, 0, 127 };
+    test3->collision.context.origin = { 150, -100 };
     test3->AdjustRenderOrigin();
 
-    test4 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    test4 = entity_manager->CreateEntity("test_entity");
     test4->SetTexture(engine->LoadImage("C:/Windows/Web/Wallpaper/Windows/img0.jpg"));
-    test4->render_context.render_size = { 50, 50 };
-    test4->render_context.scale = true;
-    test4->collision.maxs = { 25, -25 };
-    test4->collision.mins = { -25, 25 };
-    test4->collision.origin = { test4_x_base - 100, test4_y_base + 100 };
+    test4->render.context.render_size = { 50, 50 };
+    test4->render.context.scale = true;
+    test4->collision.context.maxs = { 25, -25 };
+    test4->collision.context.mins = { -25, 25 };
+    test4->collision.context.origin = { test4_x_base - 100, test4_y_base + 100 };
     test4->AdjustRenderOrigin();
 
-    test5 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    test5 = entity_manager->CreateEntity("test_entity");
     test5->SetTexture(engine->LoadImage("E:/test.png"));
-    test5->render_context.render_size = { 50, 50 };
-    test5->collision.maxs = { 25, -25 };
-    test5->collision.mins = { -25, 25 };
-    test5->collision.origin = { 475, -275 };
+    test5->render.context.render_size = { 50, 50 };
+    test5->collision.context.maxs = { 25, -25 };
+    test5->collision.context.mins = { -25, 25 };
+    test5->collision.context.origin = { 475, -275 };
     test5->AdjustRenderOrigin();
 
-    TestEntity* test6 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    TestEntity* test6 = entity_manager->CreateEntity("test_entity");
     test6->SetTexture(engine->CreateRawTexture("texture_stream", &descriptor));
-    test6->OwnTexture();
-    test6->render_context.render_size = { 100, 100 };
-    test6->collision.origin = { 100, -330 };
+    test6->render.OwnTexture();
+    test6->render.context.render_size = { 100, 100 };
+    test6->collision.context.origin = { 100, -330 };
     test6->AdjustRenderOrigin();
 
-    TestEntity* cursor = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-    cursor->render_context.render_size = { 1, 1 };
-    cursor->collision.origin = { 320, -240 };
+    TestEntity* cursor = entity_manager->CreateEntity("test_entity");
+    cursor->render.context.render_size = { 1, 1 };
+    cursor->collision.context.origin = { 320, -240 };
     cursor->AdjustRenderOrigin();
 
-    test7 = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
+    test7 = entity_manager->CreateEntity("test_entity");
     test7->SetTexture(engine->CreateRawTexture("texture_text", &text));
-    test7->OwnTexture();
+    test7->render.OwnTexture();
     text.SetFont("C:/Windows/Fonts/arial.ttf");
     text.SetBuffer("Hello World! I Am Text!");
     text.SetFontSize(12);
     text.SetWrapWidth(50);
     text.SetHorizontalWrapAlignment(nuke::TextDescriptor::HORIZONTAL_CENTRE);
     test7->AdjustBounds();
-    test7->collision.origin = { 50, -50 }; // You can change horizontal/vertical alignment using mins/maxs.
+    test7->collision.context.origin = { 50, -50 }; // You can change horizontal/vertical alignment using mins/maxs.
     test7->AdjustRenderOrigin();
 
     // test
@@ -151,7 +151,7 @@ bool TestGame::Start()
     nuke::ISound* sound = engine->LoadSound("C:/Windows/Media/Alarm01.wav");
     sound->Play(true);
     sound->SetPlaybackSpeed(1.02);
-    sound->SetParentEntity(test4);
+    sound->SetParentCollideable(&test4->collision);
     sound->SetMaxDistance(2000);
 
     // preliminary networking test
@@ -181,29 +181,30 @@ bool TestGame::PerTick(bool last_per_frame)
 {
     if (commonvars.curtime > 5)
     {
-        test4->collision.origin = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
-                                    test4_y_base + std::cos(commonvars.ticks / 10.f) * 50 };
+        test4->collision.context.origin = { test4_x_base + std::sin(commonvars.ticks / 10.f) * 50, 
+                                            test4_y_base + std::cos(commonvars.ticks / 10.f) * 50 };
         test4->AdjustRenderOrigin();
     }
 
     if (funny_entity == nullptr && commonvars.curtime >= 8 && commonvars.curtime < 12)
     {
-        funny_entity = static_cast<TestEntity*>(entity_manager->CreateEntity("test_entity"));
-        funny_entity->render_context.render_size = { 100, 100 };
-        funny_entity->collision.origin = { -3000, -350 };
-        funny_entity->collision.velocity = { 4000, 0 };
-        funny_entity->collision.maxs = { 50, -50 };
-        funny_entity->collision.mins = { -50, 50 };
+        funny_entity = entity_manager->CreateEntity("test_entity");
+        funny_entity->render.context.render_size = { 100, 100 };
+        funny_entity->collision.context.origin = { -3000, -350 };
+        funny_entity->collision.context.velocity = { 4000, 0 };
+        funny_entity->collision.context.maxs = { 50, -50 };
+        funny_entity->collision.context.mins = { -50, 50 };
 
         nuke::ISound* sound = engine->LoadSound("heavy_scram2012_falling01.mp3");
         sound->Play(true);
         sound->SetVolume(4.f);
-        sound->SetParentEntity(funny_entity);
+        sound->SetParentCollideable(&funny_entity->collision);
         sound->SetMaxDistance(3000);
     }
     if (funny_entity != nullptr)
     {
-        funny_entity->collision.origin.x += funny_entity->collision.velocity.x * commonvars.tick_interval;
+        funny_entity->collision.context.origin.x += funny_entity->collision.context.velocity.x 
+                                                  * commonvars.tick_interval;
         funny_entity->AdjustRenderOrigin();
 
         if (commonvars.curtime >= 12)
@@ -221,7 +222,7 @@ bool TestGame::PerTick(bool last_per_frame)
     {
         if ((frame += direction) % 4 == 0)
             direction = -direction;
-        test5->render_context.crop_offset = nuke::Vector2(frame * 50, 0);
+        test5->render.context.crop_offset = nuke::Vector2(frame * 50, 0);
     }
 
     nuke::Color* pixel_buffer = descriptor.buffer->Lock();
@@ -255,22 +256,22 @@ bool TestGame::PerTick(bool last_per_frame)
     }
     text.SetColor({ (uint8_t)color_r, 0, 0, 255 });
 
-    if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 5)
+    if (commonvars.ticks == GetTickRate() * 5)
         text.SetFont("ms sans serif");
-    else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 8)
+    else if (commonvars.ticks == GetTickRate() * 8)
         text.SetFont("");
-    else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 10)
+    else if (commonvars.ticks == GetTickRate() * 10)
         text.SetFontSize(25.f);
-    else if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 12)
+    else if (commonvars.ticks == GetTickRate() * 12)
         text.SetFontStyleFlags(nuke::TextDescriptor::FONT_STYLE_BOLD);
 
-    if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 5)
+    if (commonvars.ticks == GetTickRate() * 5)
     {
         nuke::IEvent* event = engine->CreateEvent("the most event ever");
         engine->FireEvent(event);
     }
 
-    if (commonvars.ticks == NUKE_DEFAULT_TICKRATE * 7)
+    if (commonvars.ticks == GetTickRate() * 7)
     {
         nuke::IEvent* event = engine->CreateEvent("the least event ever");
         engine->FireEvent(event);

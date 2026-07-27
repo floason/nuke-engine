@@ -77,11 +77,11 @@ public:
     // Destroy the sound instance upon stopping.
     virtual void DestroyOnFinish() override;
 
-    // Set a parent entity if this sound instance should be played from a
-    // given entity, rather than it be a global sound. Because the entity
-    // assumes ownership of this sound instance, this sound will be
-    // destroyed upon entity deletion.
-    virtual void SetParentEntity(ICollideable* collideable) override;
+    // Set a parent collideable if this sound instance should be played from a
+    // given collideable, rather than it be a global sound. Because the 
+    // collideable assumes ownership of this sound instance, this sound will be
+    // destroyed upon collideable deletion.
+    virtual void SetParentCollideable(ICollideable* collideable) override;
 
     // Set the max falloff distance for the audio, given it has a parent
     // entity. Returns false if a parent entity is not set.

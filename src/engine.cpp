@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdint>
+#include <cmath>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -621,7 +622,7 @@ bool Engine::Start(bool output_enabled)
         // Calculate the smoothed displayable framerate variable.
         if (game->commonvars.frametime > 0.f)
         {
-            float t = 1.f - std::expf(-game->commonvars.frametime);
+            float t = 1.f - std::exp(-game->commonvars.frametime);
             game->commonvars.fps = nuke::math::lerp(game->commonvars.fps, 
                                                     1.f / game->commonvars.frametime, 
                                                     t);

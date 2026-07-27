@@ -38,9 +38,6 @@ struct RenderContext
 class IRenderable
 {
 public:
-    virtual ~IRenderable() = default;
-
-public:
     // Propagate this renderable to the renderer.
     virtual void AddToRenderList(RenderContext& context) = 0;
 
